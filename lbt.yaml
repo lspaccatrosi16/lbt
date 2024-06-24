@@ -1,0 +1,24 @@
+name: lbt
+modules:
+  - name: build
+    config:
+      targets:
+        - { os: linux, arch: amd64 }
+        - { os: darwin, arch: amd64 }
+        - { os: windows, arch: amd64 }
+      commands:
+        - cmd/lbt/main.go
+      version: true
+      ldflags: -s -w
+  - name: output
+    config:
+      module: static
+      outDir: dist
+  - name: version
+    config:
+      type: buildint
+      path: cmd/lbt/version
+  - name: static
+    config: 
+      structure: static
+      exePath: a
