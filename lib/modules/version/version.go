@@ -100,10 +100,10 @@ func (v *VersionModule) RunModule(modLogger *log.Logger) error {
 		io.Copy(buf, f)
 		f.Close()
 		curVer := buf.String()
-		verParts := []int{0, 0, 0}
-		fmt.Sscanf(curVer, "%d.%d.%d", &verParts[0], &verParts[1], &verParts[2])
-		verParts[2]++
-		newVersion = fmt.Sprintf("%d.%d.%d", verParts[0], verParts[1], verParts[2])
+		verParts := []int{0, 0, 0, 0}
+		fmt.Sscanf(curVer, "%d.%d.%d.%d", &verParts[0], &verParts[1], &verParts[2], &verParts[3])
+		verParts[3]++
+		newVersion = fmt.Sprintf("%d.%d.%d.%d", verParts[0], verParts[1], verParts[2], verParts[3])
 	}
 
 	ml.Logf(log.Info, "new version: %s", newVersion)
