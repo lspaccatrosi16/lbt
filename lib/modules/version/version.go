@@ -27,7 +27,7 @@ const (
 
 func ParseVersionType(version string) (VersionType, error) {
 	switch version {
-	case "buildstring":
+	case "buildstr":
 		return VersionBuildStr, nil
 	case "buildint":
 		return VersionBuildInt, nil

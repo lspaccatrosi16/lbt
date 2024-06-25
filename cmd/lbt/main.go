@@ -2,14 +2,11 @@ package main
 
 import (
 	_ "embed"
-	"os"
-	"path/filepath"
 
 	"github.com/lspaccatrosi16/go-cli-tools/args"
-	"github.com/lspaccatrosi16/lbt/lib/config"
+	"github.com/lspaccatrosi16/lbt/lib/commands/build"
+	"github.com/lspaccatrosi16/lbt/lib/commands/create"
 	"github.com/lspaccatrosi16/lbt/lib/log"
-	"github.com/lspaccatrosi16/lbt/lib/modules"
-	"github.com/lspaccatrosi16/lbt/lib/runner"
 )
 
 //go:embed version
@@ -40,17 +37,24 @@ func main() {
 
 	log.SetLogLevel(logLev)
 
-	config, err := config.ParseConfig()
-	if err != nil {
-		log.Fatalln(err)
+	var cmd string
+	a := args.GetArgs()
+
+	if len(a) >= 1 {
+		cmd = a[0]
+	} else {
+		cmd = "build"
 	}
 
-	err = runner.RunModules(config, modules.List)
-	if err != nil {
-		log.Fatalln(err)
+	switch cmd {
+	case "build":
+		err = build.Run()
+	case "create":
+		err = create.Run()
+	default:
+		log.Fatalf("Unknown command: %s", cmd)
 	}
 
-	err = os.RemoveAll(filepath.Join(config.Cwd, "tmp"))
 	if err != nil {
 		log.Fatalln(err)
 	}

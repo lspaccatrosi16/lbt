@@ -78,6 +78,14 @@ func (b *BuildModule) RunModule(modLogger *log.Logger) error {
 			if err != nil {
 				return errors.New(stderr.String())
 			}
+
+			f, err := os.Open(outPath)
+			if err != nil {
+				return err
+			}
+			f.Chmod(0755)
+			defer f.Close()
+
 			ml.Logf(log.Info, "Built %s %s", cmd, target.String())
 		}
 	}

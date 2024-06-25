@@ -12,13 +12,9 @@ modules:
       ldflags: -s -w
   - name: output
     config:
-      module: static
-      outDir: dist
+      module: build
+      outDir: out
   - name: version
     config:
-      type: buildint
+      type: buildstr
       path: cmd/lbt/version
-  - name: static
-    config: 
-      structure: static
-      exePath: a
