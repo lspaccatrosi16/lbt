@@ -88,7 +88,7 @@ func (b *BuildModule) RunModule(modLogger *log.Logger) error {
 			if err != nil {
 				return err
 			}
-			f.Chmod(0755)
+			f.Chmod(0777)
 			defer f.Close()
 
 			ml.Logf(log.Info, "Built %s %s", cmd, target.String())
