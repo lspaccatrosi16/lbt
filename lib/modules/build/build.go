@@ -16,8 +16,13 @@ type BuildModule struct {
 	config *ModConfig
 }
 
+type Command struct {
+	Name string `yaml:"name" validate:"required"`
+	Path string `yaml:"path" validate:"required"`
+}
+
 type ModConfig struct {
-	Commands    []string       `yaml:"commands" validate:"required"`
+	Commands    []Command      `yaml:"commands" validate:"required"`
 	Ldflags     string         `yaml:"ldflags"`
 	Targets     []types.Target `yaml:"targets" validate:"required"`
 	UsesVersion bool           `yaml:"version"`
@@ -47,7 +52,7 @@ func (b *BuildModule) RunModule(modLogger *log.Logger) error {
 	}
 
 	for _, cmd := range b.config.Commands {
-		cmdPath := filepath.Join(b.bc.Cwd, cmd)
+		cmdPath := filepath.Join(b.bc.Cwd, cmd.Path)
 		for _, target := range b.config.Targets {
 			ml.Logf(log.Info, "Building %s %s", cmd, target.String())
 			err := target.Validate()
@@ -55,7 +60,7 @@ func (b *BuildModule) RunModule(modLogger *log.Logger) error {
 				return err
 			}
 
-			outPath := filepath.Join(b.bc.Cwd, "tmp", "build", b.bc.Name+"-"+target.String())
+			outPath := filepath.Join(b.bc.Cwd, "tmp", "build", cmd.Name+"-"+target.String())
 			if target.OS == types.Windows {
 				outPath += ".exe"
 			}

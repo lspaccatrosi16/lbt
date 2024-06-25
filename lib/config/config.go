@@ -40,5 +40,6 @@ func ParseConfig() (*types.BuildConfig, error) {
 		return nil, fmt.Errorf("name field cannot contain '.'")
 	}
 
+	os.Chdir(config.Cwd)
 	return &config, nil
 }
