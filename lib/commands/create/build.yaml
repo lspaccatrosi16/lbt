@@ -6,3 +6,4 @@ commands:
   - {path: cmd/lbt/main.go, name: lbt}
 version: true
 ldflags: -s -w
+cgoOff: false

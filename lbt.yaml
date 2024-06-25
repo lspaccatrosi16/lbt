@@ -10,11 +10,12 @@ modules:
         - {path: cmd/lbt/main.go, name: lbt}
       version: true
       ldflags: -s -w
+      cgoOff: true
   - name: output
     config:
       module: build
       outDir: out
   - name: version
     config:
-      type: buildstr
+      type: semver
       path: cmd/lbt/version

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/lspaccatrosi16/go-cli-tools/input"
-	"github.com/lspaccatrosi16/go-libs/structures/set"
 )
 
 func Run() error {
@@ -21,33 +20,34 @@ func Run() error {
 		return err
 	}
 
-	selMods := set.NewSet[string]()
 	opts := []input.SelectOption{
 		{
-			Name:  "build",
+			Name:  "Build",
 			Value: "build",
 		},
 		{
-			Name:  "output",
+			Name:  "Output",
 			Value: "output",
 		},
 		{
-			Name:  "static",
+			Name:  "Static",
 			Value: "static",
 		},
 		{
-			Name:  "version",
+			Name:  "Version",
 			Value: "version",
 		},
 		{
-			Name:  "done",
+			Name:  "Done",
 			Value: "done",
 		},
 	}
 
+	selPackages := []string{}
+
 selMod:
 	for {
-		sel, err := input.GetSelection("Select modules to add", opts)
+		sel, idx, err := input.GetSelectionIdx("Select modules to add", opts)
 		if err != nil {
 			return err
 		}
@@ -56,22 +56,17 @@ selMod:
 		case "done":
 			break selMod
 		default:
-			selMods.Add(sel)
+			selPackages = append(selPackages, sel)
+			fmt.Printf("%s added\n", opts[idx].Name)
+			opts = append(opts[:idx], opts[idx+1:]...)
 		}
 	}
-	sel := []string{}
-
-	next := selMods.GetIterator()
-	for v, ok := next(); ok; v, ok = next() {
-		sel = append(sel, v)
-	}
-
 	yB := bytes.NewBuffer(nil)
 	fmt.Fprintf(yB, "name: %s\n", name)
 
-	if len(sel) > 0 {
+	if len(selPackages) > 0 {
 		fmt.Fprintf(yB, "modules:\n")
-		for _, s := range sel {
+		for _, s := range selPackages {
 			mB := bytes.NewBuffer(nil)
 			fmt.Fprintf(mB, "- name: %s\n", s)
 			fmt.Fprintf(mB, "  config:\n")

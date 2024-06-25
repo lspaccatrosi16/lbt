@@ -26,6 +26,7 @@ type ModConfig struct {
 	Ldflags     string         `yaml:"ldflags"`
 	Targets     []types.Target `yaml:"targets" validate:"required"`
 	UsesVersion bool           `yaml:"version"`
+	DisableCgo  bool           `yaml:"cgoOff"`
 }
 
 func (b *BuildModule) Configure(config *types.BuildConfig) error {
@@ -74,6 +75,9 @@ func (b *BuildModule) RunModule(modLogger *log.Logger) error {
 
 			eCmd.Env = append(eCmd.Env, "GOOS="+string(target.OS))
 			eCmd.Env = append(eCmd.Env, "GOARCH="+string(target.Arch))
+			if b.config.DisableCgo {
+				eCmd.Env = append(eCmd.Env, "CGO_ENABLED=0")
+			}
 
 			var out, stderr bytes.Buffer
 			eCmd.Stdout = &out
