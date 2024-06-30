@@ -2,6 +2,7 @@ package modules
 
 import (
 	"github.com/lspaccatrosi16/lbt/lib/modules/build"
+	"github.com/lspaccatrosi16/lbt/lib/modules/compress"
 	"github.com/lspaccatrosi16/lbt/lib/modules/output"
 	"github.com/lspaccatrosi16/lbt/lib/modules/static"
 	"github.com/lspaccatrosi16/lbt/lib/modules/version"
@@ -13,4 +14,5 @@ var List = []types.Module{
 	&output.OutputModule{},
 	&version.VersionModule{},
 	&static.StaticModule{},
+	&compress.CompressModule{},
 }

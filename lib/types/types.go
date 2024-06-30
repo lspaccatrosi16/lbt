@@ -50,4 +50,5 @@ type Module interface {
 	RunModule(*log.Logger) error
 	Configure(*BuildConfig) error
 	Requires() []string
+	OnFail() error
 }

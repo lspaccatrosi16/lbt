@@ -14,9 +14,13 @@ var staticTemplate string
 //go:embed version.yaml
 var versionTemplate string
 
+//go:embed compress.yaml
+var compressTemplate string
+
 var templates = map[string]string{
-	"build":   buildTemplate,
-	"output":  outputTemplate,
-	"static":  staticTemplate,
-	"version": versionTemplate,
+	"build":    buildTemplate,
+	"output":   outputTemplate,
+	"static":   staticTemplate,
+	"version":  versionTemplate,
+	"compress": compressTemplate,
 }

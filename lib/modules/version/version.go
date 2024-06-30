@@ -6,6 +6,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
@@ -15,6 +16,7 @@ import (
 type VersionModule struct {
 	bc     *types.BuildConfig
 	config *ModuleConfig
+	prev   string
 }
 
 type VersionType int
@@ -75,6 +77,16 @@ func (v *VersionModule) RunModule(modLogger *log.Logger) error {
 	ml := modLogger.ChildLogger("version")
 	var newVersion string
 
+	f, err := os.Open(filepath.Join(v.bc.Cwd, v.config.Path))
+	if err == nil {
+		by, err := io.ReadAll(f)
+		if err != nil {
+			return err
+		}
+		v.prev = string(by)
+		f.Close()
+	}
+
 	switch v.config.VerType {
 	case VersionBuildStr:
 		newVersion = strconv.FormatInt(rand.Int63(), 36)
@@ -108,7 +120,7 @@ func (v *VersionModule) RunModule(modLogger *log.Logger) error {
 
 	ml.Logf(log.Info, "new version: %s", newVersion)
 
-	f, err := os.Create(v.config.Path)
+	f, err = os.Create(filepath.Join(v.bc.Cwd, v.config.Path))
 	if err != nil {
 		return err
 	}
@@ -122,5 +134,17 @@ func (v *VersionModule) Name() string {
 }
 
 func (v *VersionModule) Requires() []string {
+	return nil
+}
+
+func (v *VersionModule) OnFail() error {
+	if v.prev != "" {
+		f, err := os.Create(filepath.Join(v.bc.Cwd, v.config.Path))
+		if err != nil {
+			return err
+		}
+		f.WriteString(v.prev)
+		f.Close()
+	}
 	return nil
 }

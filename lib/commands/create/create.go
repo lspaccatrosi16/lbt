@@ -11,11 +11,11 @@ import (
 )
 
 func Run() error {
-	name, err := inputS("Module name:")
+	name, err := inputS("Module name: ")
 	if err != nil {
 		return err
 	}
-	oPath, err := inputS("Output path:")
+	oPath, err := inputS("Config output path: ")
 	if err != nil {
 		return err
 	}
@@ -24,6 +24,10 @@ func Run() error {
 		{
 			Name:  "Build",
 			Value: "build",
+		},
+		{
+			Name:  "Compress",
+			Value: "compress",
 		},
 		{
 			Name:  "Output",

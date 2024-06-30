@@ -112,3 +112,7 @@ func (b *BuildModule) Requires() []string {
 func (b *BuildModule) Name() string {
 	return "build"
 }
+
+func (b *BuildModule) OnFail() error {
+	return nil
+}

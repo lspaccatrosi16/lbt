@@ -1,18 +1,15 @@
 package static
 
 import (
-	"archive/tar"
-	"bytes"
-	"compress/gzip"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
+	"github.com/lspaccatrosi16/lbt/lib/util"
 )
 
 type StaticModule struct {
@@ -70,7 +67,7 @@ func (s *StaticModule) RunModule(modLogger *log.Logger) error {
 			if err != nil {
 				return err
 			}
-			err = copy(oPath, iPath)
+			err = util.Copy(oPath, iPath)
 			if err != nil {
 				return err
 			}
@@ -92,21 +89,7 @@ func (s *StaticModule) RunModule(modLogger *log.Logger) error {
 			io.Copy(out, exe)
 			exe.Close()
 			out.Close()
-
-			compressed := bytes.NewBuffer(nil)
-			err = compress(oPath, compressed)
-			if err != nil {
-				return err
-			}
-
-			f, err := os.Create(filepath.Join(s.bc.Cwd, "tmp", "static", name+".tar.gz"))
-			if err != nil {
-				return err
-			}
-			io.Copy(f, compressed)
-			f.Close()
-			ml.Logf(log.Info, "Created %s.tar.gz", name)
-			os.RemoveAll(oPath)
+			ml.Logf(log.Info, "Created static object %s", name)
 		}
 	}
 	return nil
@@ -120,86 +103,6 @@ func (s *StaticModule) Requires() []string {
 	return []string{"build"}
 }
 
-func copy(dst string, src string) error {
-	return filepath.Walk(filepath.Join(src), func(file string, fi fs.FileInfo, err error) error {
-		if fi.IsDir() {
-			relPath, err := filepath.Rel(src, file)
-			if err != nil {
-				return err
-			}
-
-			dstPath := filepath.Join(dst, relPath)
-
-			os.MkdirAll(dstPath, 0755)
-		} else {
-			srcF, err := os.Open(file)
-			if err != nil {
-				return err
-			}
-			relPath, err := filepath.Rel(src, file)
-			if err != nil {
-				return err
-			}
-
-			dst, err := os.Create(filepath.Join(dst, relPath))
-			if err != nil {
-				return err
-			}
-			dst.Chmod(0755)
-			io.Copy(dst, srcF)
-			srcF.Close()
-			dst.Close()
-		}
-		return nil
-	})
-}
-
-func compress(src string, buf io.Writer) error {
-	zr := gzip.NewWriter(buf)
-	tw := tar.NewWriter(zr)
-
-	err := filepath.Walk(src, func(file string, fi fs.FileInfo, _ error) error {
-		header, err := tar.FileInfoHeader(fi, "")
-		if err != nil {
-			return err
-		}
-
-		relPath, err := filepath.Rel(src, file)
-		if err != nil {
-			return err
-		}
-
-		if relPath == "." {
-			return nil
-		}
-
-		header.Name = filepath.ToSlash(relPath)
-
-		if err := tw.WriteHeader(header); err != nil {
-			return err
-		}
-
-		if !fi.IsDir() {
-			data, err := os.Open(file)
-			if err != nil {
-				return err
-			}
-			io.Copy(tw, data)
-			data.Close()
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	if err := tw.Close(); err != nil {
-		return err
-	}
-
-	if err := zr.Close(); err != nil {
-		return err
-	}
-
+func (s *StaticModule) OnFail() error {
 	return nil
 }

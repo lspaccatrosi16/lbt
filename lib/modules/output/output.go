@@ -2,12 +2,12 @@ package output
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
+	"github.com/lspaccatrosi16/lbt/lib/util"
 )
 
 type OutputModule struct {
@@ -64,34 +64,28 @@ func (o *OutputModule) RunModule(modLogger *log.Logger) error {
 		}
 	}
 
-	iPath := filepath.Join(o.bc.Cwd, "tmp", o.config.Module)
+	objDir := filepath.Join(o.bc.Cwd, "tmp", o.config.Module)
 
-	dE, err := os.ReadDir(iPath)
+	dE, err := os.ReadDir(objDir)
 	if err != nil {
 		return err
 	}
 
 	for _, e := range dE {
-		if !e.IsDir() {
-			ml.Logf(log.Info, "Copying %s to %s", e.Name(), oPath)
-			src, err := os.Open(filepath.Join(iPath, e.Name()))
-			if err != nil {
-				return err
-			}
-			dst, err := os.Create(filepath.Join(oPath, e.Name()))
-			if err != nil {
-				return err
-			}
-			io.Copy(dst, src)
-			src.Close()
-			dst.Close()
+		err = util.Copy(filepath.Join(oPath, e.Name()), filepath.Join(objDir, e.Name()))
+		if err != nil {
+			return err
 		}
+		ml.Logf(log.Info, "Copied %s to %s", e.Name(), o.config.OutDir)
 	}
 
 	return nil
-
 }
 
 func (o *OutputModule) Requires() []string {
 	return []string{o.config.Module}
+}
+
+func (o *OutputModule) OnFail() error {
+	return nil
 }

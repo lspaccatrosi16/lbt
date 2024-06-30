@@ -1,9 +1,6 @@
 package build
 
 import (
-	"os"
-	"path/filepath"
-
 	"github.com/lspaccatrosi16/lbt/lib/config"
 	"github.com/lspaccatrosi16/lbt/lib/modules"
 	"github.com/lspaccatrosi16/lbt/lib/runner"
@@ -20,9 +17,5 @@ func Run() error {
 		return err
 	}
 
-	err = os.RemoveAll(filepath.Join(config.Cwd, "tmp"))
-	if err != nil {
-		return err
-	}
 	return nil
 }

@@ -1,35 +1,65 @@
 package runner
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
+	"github.com/lspaccatrosi16/lbt/lib/modules/cleanup"
+	"github.com/lspaccatrosi16/lbt/lib/modules/setup"
 	"github.com/lspaccatrosi16/lbt/lib/types"
 )
 
 var modsRun = map[string]bool{}
 var mods map[string]types.Module
 
-func RunModules(config *types.BuildConfig, modList []types.Module) error {
+func RunModules(config *types.BuildConfig, modList []types.Module) (err error) {
 	if mods == nil {
-		setup(modList)
+		createML(modList)
 	}
+
+	err = runModule(&setup.SetupModule{}, config)
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		ne := runModule(&cleanup.CleanupModule{}, config)
+		if err != nil {
+			if ne != nil {
+				err = errors.Join(err, ne)
+			}
+
+			for _, mod := range config.Modules {
+				rmod, ok := mods[mod.Name]
+				if !ok {
+					continue
+				}
+				ne = rmod.OnFail()
+				if ne != nil {
+					err = errors.Join(err, ne)
+				}
+			}
+		} else {
+			err = ne
+		}
+	}()
 
 	for _, mod := range config.Modules {
 		rmod, ok := mods[mod.Name]
 		if !ok {
 			return fmt.Errorf("module %s not found", mod.Name)
 		}
-		err := RunModule(rmod, config)
+		err = runModule(rmod, config)
 		if err != nil {
-			return err
+			return
 		}
 	}
 
-	return nil
+	return
 }
 
-func RunModule(mod types.Module, config *types.BuildConfig) error {
+func runModule(mod types.Module, config *types.BuildConfig) error {
 	if modsRun[mod.Name()] {
 		return nil
 	}
@@ -46,7 +76,7 @@ func RunModule(mod types.Module, config *types.BuildConfig) error {
 
 	for _, req := range reqs {
 		if rmod, ok := mods[req]; ok {
-			err = RunModule(rmod, config)
+			err = runModule(rmod, config)
 			if err != nil {
 				return err
 			}
@@ -58,7 +88,7 @@ func RunModule(mod types.Module, config *types.BuildConfig) error {
 	return mod.RunModule(ml)
 }
 
-func setup(list []types.Module) error {
+func createML(list []types.Module) error {
 	mods = map[string]types.Module{}
 
 	for _, mod := range list {
