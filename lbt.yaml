@@ -1,11 +1,11 @@
 name: lbt
+targets:
+  - { os: linux, arch: amd64 }
+  - { os: darwin, arch: amd64 }
+  - { os: windows, arch: amd64 }
 modules:
   - name: build
     config:
-      targets:
-        - { os: linux, arch: amd64 }
-        - { os: darwin, arch: amd64 }
-        - { os: windows, arch: amd64 }
       commands:
         - {path: cmd/lbt/main.go, name: lbt}
       version: true

@@ -2,10 +2,8 @@ package static
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
@@ -16,9 +14,20 @@ type StaticModule struct {
 	bc     *types.BuildConfig
 	config *ModConfig
 }
+
+type StaticExec struct {
+	Command string `yaml:"command" validate:"required"`
+	Path    string `yaml:"path" validate:"required"`
+}
+
+type Structure struct {
+	Name        string       `yaml:"name" validate:"required"`
+	Path        string       `yaml:"path" validate:"required"`
+	Executables []StaticExec `yaml:"executables" validate:"required"`
+}
+
 type ModConfig struct {
-	Structure string `yaml:"structure" validate:"required"`
-	ExePath   string `yaml:"exePath" validate:"required"`
+	Structures []Structure `yaml:"structures" validate:"required"`
 }
 
 func (s *StaticModule) Configure(config *types.BuildConfig) error {
@@ -28,14 +37,24 @@ func (s *StaticModule) Configure(config *types.BuildConfig) error {
 		return err
 	}
 
-	if cfg.Structure == "" {
-		return fmt.Errorf("static module requires structure field")
-	}
+	for i, str := range cfg.Structures {
+		if str.Name == "" {
+			return fmt.Errorf("static module requires name field in structure %d", i+1)
+		}
 
-	if cfg.ExePath == "" {
-		return fmt.Errorf("static module requires exePath field")
-	}
+		if str.Path == "" {
+			return fmt.Errorf("static module requires path field in structure %d", i+1)
+		}
 
+		for j, exe := range str.Executables {
+			if exe.Command == "" {
+				return fmt.Errorf("static module requires command field in structure %d executable %d", i+1, j+1)
+			}
+			if exe.Path == "" {
+				return fmt.Errorf("static module requires path field in structure %d executable %d", i+1, j+1)
+			}
+		}
+	}
 	s.config = cfg
 	return nil
 }
@@ -43,53 +62,33 @@ func (s *StaticModule) Configure(config *types.BuildConfig) error {
 func (s *StaticModule) RunModule(modLogger *log.Logger) error {
 	ml := modLogger.ChildLogger("static")
 
-	iPath := filepath.Join(s.bc.Cwd, s.config.Structure)
-	exePath := filepath.Join(s.bc.Cwd, "tmp", "build")
-	dE, err := os.ReadDir(exePath)
-	if err != nil {
-		return err
-	}
-
-	for _, entry := range dE {
-		if !entry.IsDir() {
-			name := strings.Split(entry.Name(), ".")[0]
-
-			ml.Logf(log.Info, "Copying structure to %s", name)
-
-			target, err := types.ParseTarget(strings.Split(name, "-")[1])
+	exeDir := filepath.Join(s.bc.Cwd, "tmp", "build")
+	oPath := filepath.Join(s.bc.Cwd, "tmp", "static")
+	for _, str := range s.config.Structures {
+		iPath := filepath.Join(s.bc.Cwd, str.Path)
+		for _, target := range s.bc.Targets {
+			sName := target.ExeName(str.Name, false)
+			ml.Logf(log.Info, "Creating structure %s", sName)
+			sOut := filepath.Join(oPath, sName)
+			err := os.MkdirAll(sOut, 0755)
 			if err != nil {
 				return err
 			}
 
-			oPath := filepath.Join(s.bc.Cwd, "tmp", "static", name)
-
-			err = os.MkdirAll(oPath, 0755)
-			if err != nil {
-				return err
-			}
-			err = util.Copy(oPath, iPath)
+			err = util.Copy(sOut, iPath)
 			if err != nil {
 				return err
 			}
 
-			exe, err := os.Open(filepath.Join(exePath, entry.Name()))
-			if err != nil {
-				return err
+			for _, exe := range str.Executables {
+				exeName := target.ExeName(exe.Command, true)
+				newName := target.CleanName(exe.Command, true)
+				err = util.Copy(filepath.Join(sOut, exe.Path, newName), filepath.Join(exeDir, exeName))
+				if err != nil {
+					return err
+				}
 			}
-
-			newExe := filepath.Join(oPath, s.config.ExePath, s.bc.Name)
-			if target.OS == types.Windows {
-				newExe += ".exe"
-			}
-
-			out, err := os.Create(newExe)
-			if err != nil {
-				return err
-			}
-			io.Copy(out, exe)
-			exe.Close()
-			out.Close()
-			ml.Logf(log.Info, "Created static object %s", name)
+			ml.Logf(log.Info, "Created structure %s", sName)
 		}
 	}
 	return nil

@@ -13,7 +13,8 @@ type ModuleConfig struct {
 }
 
 type BuildConfig struct {
-	Name    string `yaml:"name"`
+	Name    string   `yaml:"name"`
+	Targets []Target `yaml:"targets"`
 	Cwd     string
 	Modules []ModuleConfig `yaml:"modules"`
 }

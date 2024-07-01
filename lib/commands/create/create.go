@@ -67,6 +67,10 @@ selMod:
 	}
 	yB := bytes.NewBuffer(nil)
 	fmt.Fprintf(yB, "name: %s\n", name)
+	fmt.Fprintln(yB, "targets:")
+	fmt.Fprintln(yB, addIndent("- {os: windows, arch: amd64}", 2))
+	fmt.Fprintln(yB, addIndent("- {os: linux, arch: amd64}", 2))
+	fmt.Fprintln(yB, addIndent("- {os: darwin, arch: amd64}", 2))
 
 	if len(selPackages) > 0 {
 		fmt.Fprintf(yB, "modules:\n")

@@ -22,11 +22,10 @@ type Command struct {
 }
 
 type ModConfig struct {
-	Commands    []Command      `yaml:"commands" validate:"required"`
-	Ldflags     string         `yaml:"ldflags"`
-	Targets     []types.Target `yaml:"targets" validate:"required"`
-	UsesVersion bool           `yaml:"version"`
-	DisableCgo  bool           `yaml:"cgoOff"`
+	Commands    []Command `yaml:"commands" validate:"required"`
+	Ldflags     string    `yaml:"ldflags"`
+	UsesVersion bool      `yaml:"version"`
+	DisableCgo  bool      `yaml:"cgoOff"`
 }
 
 func (b *BuildModule) Configure(config *types.BuildConfig) error {
@@ -47,24 +46,21 @@ func (b *BuildModule) RunModule(modLogger *log.Logger) error {
 		return nil
 	}
 
-	if len(b.config.Targets) == 0 {
+	if len(b.bc.Targets) == 0 {
 		ml.Logf(log.Info, "No targets to build")
 		return nil
 	}
 
 	for _, cmd := range b.config.Commands {
 		cmdPath := filepath.Join(b.bc.Cwd, cmd.Path)
-		for _, target := range b.config.Targets {
-			ml.Logf(log.Info, "Building %s %s", cmd, target.String())
+		for _, target := range b.bc.Targets {
+			ml.Logf(log.Info, "Building %s", target.ExeName(cmd.Name, true))
 			err := target.Validate()
 			if err != nil {
 				return err
 			}
 
-			outPath := filepath.Join(b.bc.Cwd, "tmp", "build", cmd.Name+"-"+target.String())
-			if target.OS == types.Windows {
-				outPath += ".exe"
-			}
+			outPath := filepath.Join(b.bc.Cwd, "tmp", "build", target.ExeName(cmd.Name, true))
 			args := []string{"build", "-o", outPath}
 			if b.config.Ldflags != "" {
 				args = append(args, "-ldflags", b.config.Ldflags)
@@ -95,7 +91,7 @@ func (b *BuildModule) RunModule(modLogger *log.Logger) error {
 			f.Chmod(0777)
 			defer f.Close()
 
-			ml.Logf(log.Info, "Built %s %s", cmd, target.String())
+			ml.Logf(log.Info, "Built %s", target.ExeName(cmd.Name, true))
 		}
 	}
 

@@ -1,2 +1,6 @@
-structure: static
-exePath: a
+structures:
+  - name: foo
+    path: static
+    executables:
+      - command: bar
+        path: baz

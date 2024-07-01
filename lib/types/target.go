@@ -72,6 +72,21 @@ func (t Target) String() string {
 	return fmt.Sprintf("%s_%s", t.OS, t.Arch)
 }
 
+func (t Target) ExeName(n string, addExe bool) string {
+	str := fmt.Sprintf("%s-%s", n, t.String())
+	if t.OS == Windows && addExe {
+		return str + ".exe"
+	}
+	return str
+}
+
+func (t Target) CleanName(n string, addExe bool) string {
+	if t.OS == Windows && addExe {
+		return n + ".exe"
+	}
+	return n
+}
+
 func ParseTarget(s string) (Target, error) {
 	comps := strings.Split(s, "_")
 	if len(comps) != 2 {
