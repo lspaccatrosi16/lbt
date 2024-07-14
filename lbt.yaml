@@ -19,3 +19,6 @@ modules:
     config:
       type: semver
       path: cmd/lbt/version
+includeDirs:
+  - cmd
+  - lib

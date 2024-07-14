@@ -26,6 +26,7 @@ A `lbt.yaml` defines the build process.
 | `name` | string | The name of the program. |
 | `targets` | []{`os`: string; `arch`: string} | A list of build targets. |
 | `modules` | {name: string, config: moduleConfig} | A list of all modules used, and their respective configurations. |
+| `includeDirs` | []string | A list of directories to watch for file changes. |
 
 > The currently supported `os` are `linux`, `darwin`, `windows`  
 > The currently supported `arch` are `amd64`, `i386`, `arm64`, `arm`

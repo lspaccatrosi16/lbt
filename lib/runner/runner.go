@@ -48,7 +48,7 @@ func RunModules(config *types.BuildConfig, modList []types.Module) (err error) {
 	for _, mod := range config.Modules {
 		rmod, ok := mods[mod.Name]
 		if !ok {
-			return fmt.Errorf("module %s not found", mod.Name)
+			return fmt.Errorf("module %s was configured but not found", mod.Name)
 		}
 		err = runModule(rmod, config)
 		if err != nil {

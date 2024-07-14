@@ -77,6 +77,7 @@ func (o *OutputModule) RunModule(modLogger *log.Logger) error {
 			return err
 		}
 		ml.Logf(log.Info, "Copied %s to %s", e.Name(), o.config.OutDir)
+		o.bc.Produced = append(o.bc.Produced, filepath.Join(oPath, e.Name()))
 	}
 
 	return nil

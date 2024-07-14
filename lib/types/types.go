@@ -13,10 +13,12 @@ type ModuleConfig struct {
 }
 
 type BuildConfig struct {
-	Name    string   `yaml:"name"`
-	Targets []Target `yaml:"targets"`
-	Cwd     string
-	Modules []ModuleConfig `yaml:"modules"`
+	Name        string   `yaml:"name"`
+	Targets     []Target `yaml:"targets"`
+	Cwd         string
+	Modules     []ModuleConfig `yaml:"modules"`
+	IncludeDirs []string       `yaml:"includeDirs"`
+	Produced    []string
 }
 
 func GetModConfig[T any](b *BuildConfig, name string) (*T, error) {

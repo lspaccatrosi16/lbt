@@ -5,6 +5,7 @@ import (
 
 	"github.com/lspaccatrosi16/go-cli-tools/args"
 	"github.com/lspaccatrosi16/lbt/lib/commands/build"
+	"github.com/lspaccatrosi16/lbt/lib/commands/clean"
 	"github.com/lspaccatrosi16/lbt/lib/commands/create"
 	"github.com/lspaccatrosi16/lbt/lib/log"
 )
@@ -51,6 +52,8 @@ func main() {
 		err = build.Run()
 	case "create":
 		err = create.Run()
+	case "clean":
+		err = clean.Run()
 	default:
 		log.Fatalf("Unknown command: %s", cmd)
 	}
