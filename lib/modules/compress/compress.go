@@ -5,12 +5,14 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
@@ -37,6 +39,8 @@ func parseCompressionFormat(format string) (compressionFormat, error) {
 type CompressModule struct {
 	bc     *types.BuildConfig
 	config *ModConfig
+	wg     sync.WaitGroup
+	errors chan error
 }
 type ModConfig struct {
 	Module  string `yaml:"module" validate:"required"`
@@ -66,50 +70,77 @@ func (s *CompressModule) Configure(config *types.BuildConfig) error {
 
 	cfg.Sformat = ft
 	s.config = cfg
+	s.errors = make(chan error)
 	return nil
 }
 
 func (s *CompressModule) RunModule(modLogger *log.Logger) error {
-	ml := modLogger.ChildLogger("static")
+	ml := modLogger.ChildLogger("compress")
 
 	objDir := filepath.Join(s.bc.Cwd, "tmp", s.config.Module)
 	dE, err := os.ReadDir(objDir)
 	if err != nil {
 		return err
 	}
+	err = os.MkdirAll(filepath.Join(s.bc.Cwd, "tmp", "compress"), 0755)
+	if err != nil {
+		return err
+	}
 
 	for _, entry := range dE {
-		name := strings.Split(entry.Name(), ".")[0]
-		ml.Logf(log.Info, "Compressing %s", name)
-		err = os.MkdirAll(filepath.Join(s.bc.Cwd, "tmp", "compress"), 0755)
-		if err != nil {
-			return err
-		}
-
-		compressed := bytes.NewBuffer(nil)
-		iPath := filepath.Join(objDir, entry.Name())
-
-		switch s.config.Sformat {
-		case cfTarGz:
-			err = tarGzCompress(iPath, compressed)
-		case cfZip:
-			err = zipCompress(iPath, compressed)
-		}
-
-		if err != nil {
-			return err
-		}
-
-		oPath := filepath.Join(s.bc.Cwd, "tmp", "compress", name+"."+string(s.config.Sformat))
-		f, err := os.Create(oPath)
-		if err != nil {
-			return err
-		}
-
-		io.Copy(f, compressed)
-		f.Close()
+		s.wg.Add(1)
+		go s.compressTarget(ml, entry, objDir)
 	}
+
+	s.wg.Wait()
+	close(s.errors)
+
+	errs := []error{}
+	for e := range s.errors {
+		errs = append(errs, e)
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
 	return nil
+}
+
+func (s *CompressModule) compressTarget(ml *log.Logger, entry fs.DirEntry, objDir string) {
+	defer s.wg.Done()
+	name := strings.Split(entry.Name(), ".")[0]
+	ml.Logf(log.Info, "Compressing %s", name)
+	compressed := bytes.NewBuffer(nil)
+	iPath := filepath.Join(objDir, entry.Name())
+
+	var err error
+
+	switch s.config.Sformat {
+	case cfTarGz:
+		err = tarGzCompress(iPath, compressed)
+	case cfZip:
+		err = zipCompress(iPath, compressed)
+	}
+
+	if err != nil {
+		s.errors <- err
+		return
+	}
+
+	oPath := filepath.Join(s.bc.Cwd, "tmp", "compress", name+"."+string(s.config.Sformat))
+	f, err := os.Create(oPath)
+	if err != nil {
+		s.errors <- err
+		return
+	}
+
+	_, err = io.Copy(f, compressed)
+	if err != nil {
+		s.errors <- err
+		return
+	}
+	f.Close()
 }
 
 func (s *CompressModule) Name() string {

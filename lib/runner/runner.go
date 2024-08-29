@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/lspaccatrosi16/go-cli-tools/args"
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/modules/cleanup"
 	"github.com/lspaccatrosi16/lbt/lib/modules/setup"
@@ -23,7 +24,15 @@ func RunModules(config *types.BuildConfig, modList []types.Module) (err error) {
 		return
 	}
 
+	nc, err := args.GetFlagValue[bool]("nc")
+	if err != nil {
+		return
+	}
+
 	defer func() {
+		if nc {
+			return
+		}
 		ne := runModule(&cleanup.CleanupModule{}, config)
 		if err != nil {
 			if ne != nil {

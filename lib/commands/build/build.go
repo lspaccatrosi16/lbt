@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/lspaccatrosi16/go-cli-tools/args"
 	"github.com/lspaccatrosi16/lbt/lib/cache"
 	"github.com/lspaccatrosi16/lbt/lib/config"
 	"github.com/lspaccatrosi16/lbt/lib/modules"
@@ -26,6 +27,10 @@ func Run() error {
 	}
 
 	modList := modules.List
+	force, err := args.GetFlagValue[bool]("force")
+	if err != nil {
+		return err
+	}
 
 	if len(config.IncludeDirs) > 0 {
 		buildMeta.Hash, err = cache.HashDirectories(config, config.IncludeDirs)
@@ -39,7 +44,7 @@ func Run() error {
 		}
 
 		oCfg, oErr := types.GetModConfig[output.ModuleConfig](config, "output")
-		if prevMeta != nil && prevMeta.Hash == buildMeta.Hash && oErr == nil {
+		if prevMeta != nil && prevMeta.Hash == buildMeta.Hash && oErr == nil && !force {
 			modList = []types.Module{
 				&cached.GetCachedModule{Meta: prevMeta},
 				&output.OutputModule{},

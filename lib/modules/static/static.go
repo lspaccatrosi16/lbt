@@ -1,9 +1,11 @@
 package static
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
@@ -13,6 +15,8 @@ import (
 type StaticModule struct {
 	bc     *types.BuildConfig
 	config *ModConfig
+	wg     sync.WaitGroup
+	errors chan error
 }
 
 type StaticExec struct {
@@ -56,6 +60,7 @@ func (s *StaticModule) Configure(config *types.BuildConfig) error {
 		}
 	}
 	s.config = cfg
+	s.errors = make(chan error)
 	return nil
 }
 
@@ -64,34 +69,58 @@ func (s *StaticModule) RunModule(modLogger *log.Logger) error {
 
 	exeDir := filepath.Join(s.bc.Cwd, "tmp", "build")
 	oPath := filepath.Join(s.bc.Cwd, "tmp", "static")
+
+	err := os.MkdirAll(oPath, 0755)
+	if err != nil {
+		return err
+	}
+
 	for _, str := range s.config.Structures {
 		iPath := filepath.Join(s.bc.Cwd, str.Path)
 		for _, target := range s.bc.Targets {
-			sName := target.ExeName(str.Name, false)
-			ml.Logf(log.Info, "Creating structure %s", sName)
-			sOut := filepath.Join(oPath, sName)
-			err := os.MkdirAll(sOut, 0755)
-			if err != nil {
-				return err
-			}
-
-			err = util.Copy(sOut, iPath)
-			if err != nil {
-				return err
-			}
-
-			for _, exe := range str.Executables {
-				exeName := target.ExeName(exe.Command, true)
-				newName := target.CleanName(exe.Command, true)
-				err = util.Copy(filepath.Join(sOut, exe.Path, newName), filepath.Join(exeDir, exeName))
-				if err != nil {
-					return err
-				}
-			}
-			ml.Logf(log.Info, "Created structure %s", sName)
+			s.wg.Add(1)
+			go s.genStatic(ml, str, target, iPath, oPath, exeDir)
 		}
 	}
+	s.wg.Wait()
+	close(s.errors)
+	errs := []error{}
+	for e := range s.errors {
+		errs = append(errs, e)
+	}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
 	return nil
+}
+
+func (s *StaticModule) genStatic(ml *log.Logger, str Structure, target types.Target, iPath, oPath, exeDir string) {
+	defer s.wg.Done()
+	sName := target.ExeName(str.Name, false)
+	ml.Logf(log.Info, "Creating structure %s", sName)
+	sOut := filepath.Join(oPath, sName)
+	err := os.MkdirAll(sOut, 0755)
+	if err != nil {
+		s.errors <- err
+		return
+	}
+
+	err = util.Copy(sOut, iPath)
+	if err != nil {
+		s.errors <- err
+		return
+	}
+
+	for _, exe := range str.Executables {
+		exeName := target.ExeName(exe.Command, true)
+		newName := target.CleanName(exe.Command, true)
+		err = util.Copy(filepath.Join(sOut, exe.Path, newName), filepath.Join(exeDir, exeName))
+		if err != nil {
+			s.errors <- err
+			return
+		}
+	}
+	ml.Logf(log.Info, "Created structure %s", sName)
 }
 
 func (s *StaticModule) Name() string {

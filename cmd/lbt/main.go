@@ -16,6 +16,8 @@ var version string
 func setup() error {
 	args.RegisterEntry(args.NewStringEntry("config", "c", "config file", "lbt.yaml"))
 	args.RegisterEntry(args.NewStringEntry("logLevel", "l", "log level", "info"))
+	args.RegisterEntry(args.NewBoolEntry("nc", "nc", "skip cleaning tmp folder", false))
+	args.RegisterEntry(args.NewBoolEntry("force", "force", "force a cache refresh", false))
 	args.SetVersion(version)
 
 	return args.ParseOpts()
