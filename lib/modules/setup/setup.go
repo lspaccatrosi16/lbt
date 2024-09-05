@@ -21,8 +21,14 @@ func (i *SetupModule) Configure(config *types.BuildConfig) error {
 	return nil
 }
 
-func (i *SetupModule) RunModule(*log.Logger) error {
-	return os.Mkdir(filepath.Join(i.bc.Cwd, "tmp"), 0755)
+func (i *SetupModule) RunModule(modLogger *log.Logger, _ types.Target) bool{
+	ml  := modLogger.ChildLogger("setup")
+	err := os.Mkdir(filepath.Join(i.bc.Cwd, "tmp"), 0755) 
+	if err != nil {
+		ml.Logln(log.Error, err.Error())
+		return false
+	}
+	return true
 }
 
 func (i *SetupModule) Requires() []string {
@@ -31,4 +37,12 @@ func (i *SetupModule) Requires() []string {
 
 func (i *SetupModule) OnFail() error {
 	return nil
+}
+
+func (i *SetupModule) TargetAgnostic() bool {
+	return true
+}
+
+func (*SetupModule) RunOnCached() bool {
+	return true 
 }

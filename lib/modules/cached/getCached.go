@@ -24,20 +24,23 @@ func (g *GetCachedModule) Configure(config *types.BuildConfig) error {
 	return nil
 }
 
-func (g *GetCachedModule) RunModule(modLogger *log.Logger) error {
+func (g *GetCachedModule) RunModule(modLogger *log.Logger, target types.Target) bool {
 	ml := modLogger.ChildLogger("getCached")
 	ml.Logln(log.Info, "Source files unchanged, using cached build artifact")
-	err := os.MkdirAll(filepath.Join(g.bc.Cwd, "tmp", "getCached"), 0755)
+	based := filepath.Join(target.TempDir(g.bc.Cwd), "getCached")
+	err := os.MkdirAll(based, 0755)
 	if err != nil {
-		return err
+		ml.Logln(log.Error, err.Error())
+		return false
 	}
 	for _, obj := range g.Meta.Objects {
-		err := util.Copy(filepath.Join(g.bc.Cwd, "tmp", "getCached", obj), filepath.Join(g.Meta.Location(), obj))
+		err := util.Copy(filepath.Join(based, obj), filepath.Join(g.Meta.Location(), obj))
 		if err != nil {
-			return err
+			ml.Logln(log.Error, err.Error())
+			return false
 		}
 	}
-	return nil
+	return true
 }
 
 func (g *GetCachedModule) Requires() []string {
@@ -46,4 +49,12 @@ func (g *GetCachedModule) Requires() []string {
 
 func (g *GetCachedModule) OnFail() error {
 	return nil
+}
+
+func (g *GetCachedModule) TargetAgnostic() bool {
+	return true
+}
+
+func (*GetCachedModule) RunOnCached() bool {
+	return true 
 }

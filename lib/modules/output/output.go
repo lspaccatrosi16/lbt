@@ -43,7 +43,7 @@ func (o *OutputModule) Configure(config *types.BuildConfig) error {
 	return nil
 }
 
-func (o *OutputModule) RunModule(modLogger *log.Logger) error {
+func (o *OutputModule) RunModule(modLogger *log.Logger, target types.Target) bool {
 	ml := modLogger.ChildLogger("output")
 
 	oPath := filepath.Join(o.bc.Cwd, o.config.OutDir)
@@ -53,34 +53,39 @@ func (o *OutputModule) RunModule(modLogger *log.Logger) error {
 		if os.IsNotExist(err) {
 			err = os.MkdirAll(oPath, 0755)
 			if err != nil {
-				return err
+				ml.Logln(log.Error, err.Error())
+				return false
 			}
 		} else {
-			return err
+			ml.Logln(log.Error, err.Error())
+			return false
 		}
 	} else {
 		if !s.IsDir() {
-			return fmt.Errorf("output directory %s is not a directory", o.config.OutDir)
+			ml.Logln(log.Error, fmt.Errorf("output directory %s is not a directory", o.config.OutDir))
+			return false
 		}
 	}
 
-	objDir := filepath.Join(o.bc.Cwd, "tmp", o.config.Module)
+	objDir := filepath.Join(target.TempDir(o.bc.Cwd), o.config.Module)
 
 	dE, err := os.ReadDir(objDir)
 	if err != nil {
-		return err
+				ml.Logln(log.Error, err.Error())
+				return false
 	}
 
 	for _, e := range dE {
 		err = util.Copy(filepath.Join(oPath, e.Name()), filepath.Join(objDir, e.Name()))
 		if err != nil {
-			return err
+				ml.Logln(log.Error, err.Error())
+				return false
 		}
 		ml.Logf(log.Info, "Copied %s to %s", e.Name(), o.config.OutDir)
 		o.bc.Produced = append(o.bc.Produced, filepath.Join(oPath, e.Name()))
 	}
 
-	return nil
+	return true 
 }
 
 func (o *OutputModule) Requires() []string {
@@ -89,4 +94,12 @@ func (o *OutputModule) Requires() []string {
 
 func (o *OutputModule) OnFail() error {
 	return nil
+}
+
+func (o *OutputModule) TargetAgnostic() bool {
+	return false
+}
+
+func (*OutputModule) RunOnCached() bool {
+	return true 
 }

@@ -1,11 +1,9 @@
 package static
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
@@ -15,8 +13,6 @@ import (
 type StaticModule struct {
 	bc     *types.BuildConfig
 	config *ModConfig
-	wg     sync.WaitGroup
-	errors chan error
 }
 
 type StaticExec struct {
@@ -60,55 +56,45 @@ func (s *StaticModule) Configure(config *types.BuildConfig) error {
 		}
 	}
 	s.config = cfg
-	s.errors = make(chan error)
 	return nil
 }
 
-func (s *StaticModule) RunModule(modLogger *log.Logger) error {
+func (s *StaticModule) RunModule(modLogger *log.Logger, target types.Target) bool {
 	ml := modLogger.ChildLogger("static")
 
-	exeDir := filepath.Join(s.bc.Cwd, "tmp", "build")
-	oPath := filepath.Join(s.bc.Cwd, "tmp", "static")
+	based := target.TempDir(s.bc.Cwd)
+	exeDir := filepath.Join(based, "build")
+	oPath := filepath.Join(based, "static")
 
 	err := os.MkdirAll(oPath, 0755)
 	if err != nil {
-		return err
+		ml.Logln(log.Error, err.Error())
+		return false
 	}
 
 	for _, str := range s.config.Structures {
 		iPath := filepath.Join(s.bc.Cwd, str.Path)
-		for _, target := range s.bc.Targets {
-			s.wg.Add(1)
-			go s.genStatic(ml, str, target, iPath, oPath, exeDir)
+		err = s.genStatic(ml, str, target, iPath, oPath, exeDir)
+		if err != nil {
+			ml.Logln(log.Error, err.Error())
+			return false
 		}
 	}
-	s.wg.Wait()
-	close(s.errors)
-	errs := []error{}
-	for e := range s.errors {
-		errs = append(errs, e)
-	}
-	if len(errs) > 0 {
-		return errors.Join(errs...)
-	}
-	return nil
+	return true
 }
 
-func (s *StaticModule) genStatic(ml *log.Logger, str Structure, target types.Target, iPath, oPath, exeDir string) {
-	defer s.wg.Done()
+func (s *StaticModule) genStatic(ml *log.Logger, str Structure, target types.Target, iPath, oPath, exeDir string) error {
 	sName := target.ExeName(str.Name, false)
 	ml.Logf(log.Info, "Creating structure %s", sName)
 	sOut := filepath.Join(oPath, sName)
 	err := os.MkdirAll(sOut, 0755)
 	if err != nil {
-		s.errors <- err
-		return
+		return err
 	}
 
 	err = util.Copy(sOut, iPath)
 	if err != nil {
-		s.errors <- err
-		return
+		return err
 	}
 
 	for _, exe := range str.Executables {
@@ -116,11 +102,12 @@ func (s *StaticModule) genStatic(ml *log.Logger, str Structure, target types.Tar
 		newName := target.CleanName(exe.Command, true)
 		err = util.Copy(filepath.Join(sOut, exe.Path, newName), filepath.Join(exeDir, exeName))
 		if err != nil {
-			s.errors <- err
-			return
+			return err
 		}
 	}
 	ml.Logf(log.Info, "Created structure %s", sName)
+
+	return nil
 }
 
 func (s *StaticModule) Name() string {
@@ -133,4 +120,12 @@ func (s *StaticModule) Requires() []string {
 
 func (s *StaticModule) OnFail() error {
 	return nil
+}
+
+func (s *StaticModule) TargetAgnostic() bool {
+	return false
+}
+
+func (*StaticModule) RunOnCached() bool {
+	return false
 }

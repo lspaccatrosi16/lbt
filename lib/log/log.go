@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -53,6 +54,7 @@ var SelLogLevel = Info
 type Logger struct {
 	Parent *Logger
 	Name   string
+	Writer io.Writer
 }
 
 func (l *Logger) prefix() []string {
@@ -76,13 +78,21 @@ func (l *Logger) getPrefix() string {
 	return s[:len(s)-1] + " "
 }
 
+func (l *Logger) log(str string, level LogLevel, wovr io.Writer) {
+	if wovr != nil {
+		fmt.Fprintf(wovr, "%s%s %s\n", l.getPrefix(), level, str)
+	} else {
+		fmt.Fprintf(l.Writer, "%s%s %s\n", l.getPrefix(), level, str)
+	}
+}
+
 func (l *Logger) Logln(level LogLevel, s ...any) {
 	if level < SelLogLevel {
 		return
 	}
 
 	comb := fmt.Sprint(s...)
-	fmt.Printf("%s%s %s\n", l.getPrefix(), level, comb)
+	l.log(comb, level, nil)
 }
 
 func (l *Logger) Logf(level LogLevel, format string, s ...any) {
@@ -91,27 +101,37 @@ func (l *Logger) Logf(level LogLevel, format string, s ...any) {
 	}
 
 	comb := fmt.Sprintf(format, s...)
-	fmt.Printf("%s%s %s\n", l.getPrefix(), level, comb)
+	l.log(comb, level, nil)
 }
 
 func (l *Logger) Fatalln(s ...any) {
-	l.Logln(Error, s...)
+	comb := fmt.Sprint(s...)
+	l.log(comb, Error, os.Stderr)
 	os.Exit(1)
 }
 
 func (l *Logger) Fatalf(format string, s ...any) {
-	l.Logf(Error, format, s...)
+	comb := fmt.Sprintf(format, s...)
+	l.log(comb, Error, os.Stderr)
 	os.Exit(1)
 }
 
 func (l *Logger) ChildLogger(name string) *Logger {
-	return &Logger{
+	nl := &Logger{
 		Parent: l,
 		Name:   name,
+		Writer: l.Writer,
 	}
+
+	return nl
 }
 
-var Default = &Logger{}
+func (l *Logger) OverrideWriter(w io.Writer) *Logger {
+	l.Writer = w
+	return l
+}
+
+var Default = &Logger{Writer: os.Stdout}
 
 var Logln = Default.Logln
 var Logf = Default.Logf

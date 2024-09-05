@@ -26,11 +26,13 @@ func Run() error {
 		BuildTime: time.Now().Unix(),
 	}
 
-	modList := modules.List
+	modList := modules.Main
 	force, err := args.GetFlagValue[bool]("force")
 	if err != nil {
 		return err
 	}
+
+	var usesCache bool
 
 	if len(config.IncludeDirs) > 0 {
 		buildMeta.Hash, err = cache.HashDirectories(config, config.IncludeDirs)
@@ -45,19 +47,20 @@ func Run() error {
 
 		oCfg, oErr := types.GetModConfig[output.ModuleConfig](config, "output")
 		if prevMeta != nil && prevMeta.Hash == buildMeta.Hash && oErr == nil && !force {
-			modList = []types.Module{
-				&cached.GetCachedModule{Meta: prevMeta},
-				&output.OutputModule{},
+			modList = map[string]types.Module{
+				"getCached": &cached.GetCachedModule{Meta: prevMeta},
+				"output": &output.OutputModule{},
 			}
 			config.Modules = []types.ModuleConfig{
 				{Name: "getCached", Config: map[string]interface{}{}},
 				{Name: "output", Config: map[string]interface{}{"module": "getCached", "outDir": oCfg.OutDir}},
 			}
 			buildMeta = *prevMeta
+			usesCache = true
 		}
 	}
 
-	err = runner.RunModules(config, modList)
+	err = runner.RunModules(config, modList, usesCache)
 	if err != nil {
 		return err
 	}

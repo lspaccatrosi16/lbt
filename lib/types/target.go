@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -85,6 +86,10 @@ func (t Target) CleanName(n string, addExe bool) string {
 		return n + ".exe"
 	}
 	return n
+}
+
+func (t Target) TempDir(cwd string) string {
+	return filepath.Join(cwd, "tmp", t.String())
 }
 
 func ParseTarget(s string) (Target, error) {

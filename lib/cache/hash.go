@@ -12,10 +12,16 @@ import (
 
 func HashDirectories(bc *types.BuildConfig, dirs []string) (string, error) {
 	tHashes := ""
+
+	var vfile string
+	if bc.Version.Path != "" {
+		vfile = filepath.Join(bc.Cwd, bc.Version.Path)
+	}
+
 	for _, dir := range dirs {
 		dHash := ""
 		err := filepath.WalkDir(filepath.Join(bc.Cwd, dir), func(path string, d fs.DirEntry, err error) error {
-			if !d.IsDir() {
+			if !d.IsDir() && (vfile == "" || vfile != path){
 				pHash := hash([]byte(path))
 				di, err := d.Info()
 				if err != nil {

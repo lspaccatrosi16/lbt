@@ -2,17 +2,36 @@ package modules
 
 import (
 	"github.com/lspaccatrosi16/lbt/lib/modules/build"
+	"github.com/lspaccatrosi16/lbt/lib/modules/cleanup"
 	"github.com/lspaccatrosi16/lbt/lib/modules/compress"
 	"github.com/lspaccatrosi16/lbt/lib/modules/output"
+	"github.com/lspaccatrosi16/lbt/lib/modules/setup"
 	"github.com/lspaccatrosi16/lbt/lib/modules/static"
 	"github.com/lspaccatrosi16/lbt/lib/modules/version"
 	"github.com/lspaccatrosi16/lbt/lib/types"
 )
 
-var List = []types.Module{
-	&build.BuildModule{},
-	&output.OutputModule{},
-	&version.VersionModule{},
-	&static.StaticModule{},
-	&compress.CompressModule{},
+var Pre = map[string]types.Module{
+	"setup":   &setup.SetupModule{},
+	"version": &version.VersionModule{},
+}
+
+var PreOrder = []string{
+	"setup",
+	"version",
+}
+
+var Main = map[string]types.Module{
+	"build":    &build.BuildModule{},
+	"output":   &output.OutputModule{},
+	"static":   &static.StaticModule{},
+	"compress": &compress.CompressModule{},
+}
+
+var Post = map[string]types.Module{
+	"cleanup": &cleanup.CleanupModule{},
+}
+
+var PostOrder = []string{
+	"cleanup",
 }

@@ -41,47 +41,47 @@ func ParseVersionType(version string) (VersionType, error) {
 }
 
 type ModuleConfig struct {
-	Path    string `yaml:"path" validate:"required"`
-	VtS     string `yaml:"type" validate:"required"`
 	VerType VersionType
 }
 
 func (v *VersionModule) Configure(config *types.BuildConfig) error {
 	v.bc = config
-	cfg, err := types.GetModConfig[ModuleConfig](config, "version")
 
+	if config.Version.Path == "" {
+		return nil
+	}
+
+	if config.Version.VtS == "" {
+		return nil
+	}
+
+	vt, err := ParseVersionType(config.Version.VtS)
 	if err != nil {
 		return err
 	}
 
-	if cfg.Path == "" {
-		return fmt.Errorf("version module requires path field")
+	cfg := &ModuleConfig{
+		VerType: vt,
 	}
 
-	if cfg.VtS == "" {
-		return fmt.Errorf("version module requires type field")
-	}
-
-	vt, err := ParseVersionType(cfg.VtS)
-	if err != nil {
-		return err
-	}
-
-	cfg.VerType = vt
 	v.config = cfg
-
 	return nil
 }
 
-func (v *VersionModule) RunModule(modLogger *log.Logger) error {
+func (v *VersionModule) RunModule(modLogger *log.Logger, _ types.Target) bool {
+	if v.config == nil {
+		return true 
+	}
+
 	ml := modLogger.ChildLogger("version")
 	var newVersion string
 
-	f, err := os.Open(filepath.Join(v.bc.Cwd, v.config.Path))
+	f, err := os.Open(filepath.Join(v.bc.Cwd, v.bc.Version.Path))
 	if err == nil {
 		by, err := io.ReadAll(f)
 		if err != nil {
-			return err
+			ml.Logln(log.Error, err.Error())
+			return false
 		}
 		v.prev = string(by)
 		f.Close()
@@ -91,22 +91,25 @@ func (v *VersionModule) RunModule(modLogger *log.Logger) error {
 	case VersionBuildStr:
 		newVersion = strconv.FormatInt(rand.Int63(), 36)
 	case VersionBuildInt:
-		f, err := os.Open(v.config.Path)
+		f, err := os.Open(v.bc.Version.Path)
 		if err != nil {
-			return err
+			ml.Logln(log.Error, err.Error())
+			return false
 		}
 		buf := bytes.NewBuffer(nil)
 		io.Copy(buf, f)
 		f.Close()
 		curVer, err := strconv.Atoi(buf.String())
 		if err != nil {
-			return err
+			ml.Logln(log.Error, err.Error())
+			return false
 		}
 		newVersion = strconv.Itoa(curVer + 1)
 	case VersionSemVer:
-		f, err := os.Open(v.config.Path)
+		f, err := os.Open(v.bc.Version.Path)
 		if err != nil {
-			return err
+			ml.Logln(log.Error, err.Error())
+			return false
 		}
 		buf := bytes.NewBuffer(nil)
 		io.Copy(buf, f)
@@ -120,13 +123,14 @@ func (v *VersionModule) RunModule(modLogger *log.Logger) error {
 
 	ml.Logf(log.Info, "new version: %s", newVersion)
 
-	f, err = os.Create(filepath.Join(v.bc.Cwd, v.config.Path))
+	f, err = os.Create(filepath.Join(v.bc.Cwd, v.bc.Version.Path))
 	if err != nil {
-		return err
+		ml.Logln(log.Error, err.Error())
+		return false
 	}
 	f.WriteString(newVersion)
 	f.Close()
-	return nil
+	return true
 }
 
 func (v *VersionModule) Name() string {
@@ -139,7 +143,7 @@ func (v *VersionModule) Requires() []string {
 
 func (v *VersionModule) OnFail() error {
 	if v.prev != "" {
-		f, err := os.Create(filepath.Join(v.bc.Cwd, v.config.Path))
+		f, err := os.Create(filepath.Join(v.bc.Cwd, v.bc.Version.Path))
 		if err != nil {
 			return err
 		}
@@ -147,4 +151,12 @@ func (v *VersionModule) OnFail() error {
 		f.Close()
 	}
 	return nil
+}
+
+func (v *VersionModule) TargetAgnostic() bool {
+	return true
+}
+
+func (*VersionModule) RunOnCached() bool {
+	return false
 }

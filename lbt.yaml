@@ -1,8 +1,10 @@
 name: lbt
+
 targets:
   - { os: linux, arch: amd64 }
   - { os: darwin, arch: amd64 }
   - { os: windows, arch: amd64 }
+
 modules:
   - name: build
     config:
@@ -15,10 +17,11 @@ modules:
     config:
       module: build
       outDir: out
-  - name: version
-    config:
-      type: semver
-      path: cmd/lbt/version
+
 includeDirs:
   - cmd
   - lib
+
+version:
+  type: semver
+  path: cmd/lbt/version

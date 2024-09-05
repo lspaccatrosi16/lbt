@@ -42,7 +42,6 @@ The core build module of `lbt`. Configure commands (e.g. each main.go that you w
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | `commands` | {`name`: string, `path`: string} | A list of commands, which are objects that contain a `name` and a `path`, which points to the `main.go` file. |
-| `version` | boolean | Whether the version module is being used, to ensure that the `version` module is run before this.
 | `ldflags` | string | Any flags that should be passed to the `go build` command in the `-ldflags` argument. |
 | `cgOff` | boolean | Disables CGO for the build (useful if you want to make sure your program is statically linked). |
 
@@ -87,7 +86,7 @@ Compresses built objects into archives.
 > The currently supported `format` are `tar.gz` and `zip`
 
 ### Version
-Updates a plaintext file with a version string, which can be included into the executable with a `//go:embed` tag. To ensure that this is executed before the executable is built, the build module's `version` setting should be enabled.
+Updates a plaintext file with a version string, which can be included into the executable with a `//go:embed` tag. 
 
 #### Version Module Config
 

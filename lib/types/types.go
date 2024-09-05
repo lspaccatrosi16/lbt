@@ -12,12 +12,18 @@ type ModuleConfig struct {
 	Config map[string]interface{} `yaml:"config"`
 }
 
+type VerConfig struct {
+	Path string `yaml:"path"`
+	VtS  string `yaml:"type"`
+}
+
 type BuildConfig struct {
 	Name        string   `yaml:"name"`
 	Targets     []Target `yaml:"targets"`
 	Cwd         string
 	Modules     []ModuleConfig `yaml:"modules"`
 	IncludeDirs []string       `yaml:"includeDirs"`
+	Version     VerConfig      `yaml:"version"`
 	Produced    []string
 }
 
@@ -50,8 +56,9 @@ func (b *BuildConfig) modConfig(name string) (map[string]interface{}, error) {
 
 type Module interface {
 	Name() string
-	RunModule(*log.Logger) error
+	RunModule(*log.Logger, Target) bool
 	Configure(*BuildConfig) error
 	Requires() []string
-	OnFail() error
+	TargetAgnostic() bool
+	RunOnCached() bool
 }
