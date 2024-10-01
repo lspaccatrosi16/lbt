@@ -1,4 +1,4 @@
-package build
+package gobuild
 
 import (
 	"bytes"
@@ -22,14 +22,15 @@ type Command struct {
 }
 
 type ModConfig struct {
-	Commands    []Command `yaml:"commands" validate:"required"`
-	Ldflags     string    `yaml:"ldflags"`
-	DisableCgo  bool      `yaml:"cgoOff"`
+	Commands   []Command `yaml:"commands" validate:"required"`
+	Ldflags    string    `yaml:"ldflags"`
+	DisableCgo bool      `yaml:"cgoOff"`
+	Root       string    `yaml:"root"`
 }
 
 func (b *BuildModule) Configure(config *types.BuildConfig) error {
 	b.bc = config
-	cfg, err := types.GetModConfig[ModConfig](config, "build")
+	cfg, err := types.GetModConfig[ModConfig](config, "gobuild")
 	if err != nil {
 		return err
 	}
@@ -38,7 +39,7 @@ func (b *BuildModule) Configure(config *types.BuildConfig) error {
 }
 
 func (b *BuildModule) RunModule(modLogger *log.Logger, target types.Target) bool {
-	ml := modLogger.ChildLogger("build")
+	ml := modLogger.ChildLogger("gobuild")
 
 	if len(b.config.Commands) == 0 {
 		ml.Logf(log.Info, "No commands to build")
@@ -64,7 +65,7 @@ func (b *BuildModule) buildCommandTarget(ml *log.Logger, cmd Command, target typ
 		return err
 	}
 
-	outPath := filepath.Join(target.TempDir(b.bc.Cwd), "build", target.ExeName(cmd.Name, true))
+	outPath := filepath.Join(target.TempDir(b.bc.Cwd), "gobuild", target.ExeName(cmd.Name, true))
 	args := []string{"build", "-o", outPath}
 	if b.config.Ldflags != "" {
 		args = append(args, "-ldflags", b.config.Ldflags)
@@ -77,6 +78,10 @@ func (b *BuildModule) buildCommandTarget(ml *log.Logger, cmd Command, target typ
 	eCmd.Env = append(eCmd.Env, "GOARCH="+string(target.Arch))
 	if b.config.DisableCgo {
 		eCmd.Env = append(eCmd.Env, "CGO_ENABLED=0")
+	}
+
+	if b.config.Root != "" {
+		eCmd.Dir = b.config.Root
 	}
 
 	var out, stderr bytes.Buffer
@@ -104,7 +109,7 @@ func (b *BuildModule) Requires() []string {
 }
 
 func (b *BuildModule) Name() string {
-	return "build"
+	return "gobuild"
 }
 
 func (b *BuildModule) OnFail() error {
@@ -115,6 +120,6 @@ func (b *BuildModule) TargetAgnostic() bool {
 	return false
 }
 
-func (*BuildModule ) RunOnCached() bool {
+func (*BuildModule) RunOnCached() bool {
 	return false
 }

@@ -28,6 +28,7 @@ type Structure struct {
 
 type ModConfig struct {
 	Structures []Structure `yaml:"structures" validate:"required"`
+	Module     string      `yaml:"module" validate:"required"`
 }
 
 func (s *StaticModule) Configure(config *types.BuildConfig) error {
@@ -63,7 +64,7 @@ func (s *StaticModule) RunModule(modLogger *log.Logger, target types.Target) boo
 	ml := modLogger.ChildLogger("static")
 
 	based := target.TempDir(s.bc.Cwd)
-	exeDir := filepath.Join(based, "build")
+	exeDir := filepath.Join(based, s.config.Module)
 	oPath := filepath.Join(based, "static")
 
 	err := os.MkdirAll(oPath, 0755)
@@ -115,7 +116,7 @@ func (s *StaticModule) Name() string {
 }
 
 func (s *StaticModule) Requires() []string {
-	return []string{"build"}
+	return []string{s.config.Module}
 }
 
 func (s *StaticModule) OnFail() error {

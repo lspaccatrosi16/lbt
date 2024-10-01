@@ -6,7 +6,7 @@ targets:
   - { os: windows, arch: amd64 }
 
 modules:
-  - name: build
+  - name: gobuild
     config:
       commands:
         - {path: cmd/lbt/main.go, name: lbt}
@@ -15,7 +15,7 @@ modules:
       cgoOff: true
   - name: output
     config:
-      module: build
+      module: gobuild
       outDir: out
 
 includeDirs:

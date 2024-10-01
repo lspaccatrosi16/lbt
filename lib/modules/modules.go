@@ -1,7 +1,7 @@
 package modules
 
 import (
-	"github.com/lspaccatrosi16/lbt/lib/modules/build"
+	"github.com/lspaccatrosi16/lbt/lib/modules/gobuild"
 	"github.com/lspaccatrosi16/lbt/lib/modules/cleanup"
 	"github.com/lspaccatrosi16/lbt/lib/modules/compress"
 	"github.com/lspaccatrosi16/lbt/lib/modules/output"
@@ -22,7 +22,7 @@ var PreOrder = []string{
 }
 
 var Main = map[string]types.Module{
-	"build":    &build.BuildModule{},
+	"gobuild":    &gobuild.BuildModule{},
 	"output":   &output.OutputModule{},
 	"static":   &static.StaticModule{},
 	"compress": &compress.CompressModule{},

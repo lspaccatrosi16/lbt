@@ -33,7 +33,7 @@ A `lbt.yaml` defines the build process.
 
 ## Modules
 
-### Build
+### GoBuild
 
 The core build module of `lbt`. Configure commands (e.g. each main.go that you want to be produced into a binary).
 
@@ -44,6 +44,7 @@ The core build module of `lbt`. Configure commands (e.g. each main.go that you w
 | `commands` | {`name`: string, `path`: string} | A list of commands, which are objects that contain a `name` and a `path`, which points to the `main.go` file. |
 | `ldflags` | string | Any flags that should be passed to the `go build` command in the `-ldflags` argument. |
 | `cgOff` | boolean | Disables CGO for the build (useful if you want to make sure your program is statically linked). |
+| `root` | string | The root directory that the go build commands will be run from. |
 
 ### Output
 Writes built objects to a given output directory.
