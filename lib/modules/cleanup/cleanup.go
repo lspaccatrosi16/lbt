@@ -2,7 +2,6 @@ package cleanup
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
@@ -23,7 +22,7 @@ func (c *CleanupModule) Configure(config *types.BuildConfig) error {
 
 func (c *CleanupModule) RunModule(modLogger *log.Logger, _ types.Target) bool {
 	ml := modLogger.ChildLogger("cleanup")
-	err := os.RemoveAll(filepath.Join(c.bc.Cwd, "tmp"))
+	err := os.RemoveAll(types.NoTarget.TempDir())
 	if err != nil {
 		ml.Logln(log.Error, err.Error())
 		return false
@@ -44,5 +43,5 @@ func (c *CleanupModule) TargetAgnostic() bool {
 }
 
 func (*CleanupModule) RunOnCached() bool {
-	return true 
+	return true
 }

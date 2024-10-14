@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
@@ -99,7 +100,7 @@ func (v *VersionModule) RunModule(modLogger *log.Logger, _ types.Target) bool {
 		buf := bytes.NewBuffer(nil)
 		io.Copy(buf, f)
 		f.Close()
-		curVer, err := strconv.Atoi(buf.String())
+		curVer, err := strconv.Atoi(strings.Trim(buf.String(), " \r\n\t"))
 		if err != nil {
 			ml.Logln(log.Error, err.Error())
 			return false

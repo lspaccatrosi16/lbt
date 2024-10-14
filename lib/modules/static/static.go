@@ -63,7 +63,7 @@ func (s *StaticModule) Configure(config *types.BuildConfig) error {
 func (s *StaticModule) RunModule(modLogger *log.Logger, target types.Target) bool {
 	ml := modLogger.ChildLogger("static")
 
-	based := target.TempDir(s.bc.Cwd)
+	based := target.TempDir()
 	exeDir := filepath.Join(based, s.config.Module)
 	oPath := filepath.Join(based, "static")
 

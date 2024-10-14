@@ -2,17 +2,23 @@ package types
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type OS string
 type Arch string
 
+var timestamp = fmt.Sprint(time.Now().Unix())
+
 const (
 	Windows OS = "windows"
 	Linux   OS = "linux"
 	MacOS   OS = "darwin"
+	JVM     OS = "jvm"
+	Android OS = "android"
 )
 
 const (
@@ -30,6 +36,10 @@ func ParseOS(s string) (OS, error) {
 		return Linux, nil
 	case "darwin":
 		return MacOS, nil
+	case "jvm":
+		return JVM, nil
+	case "android":
+		return Android, nil
 	default:
 		return "", fmt.Errorf("unknown OS: %s", s)
 	}
@@ -88,8 +98,13 @@ func (t Target) CleanName(n string, addExe bool) string {
 	return n
 }
 
-func (t Target) TempDir(cwd string) string {
-	return filepath.Join(cwd, "tmp", t.String())
+func (t Target) TempDir() string {
+	tmpDir := os.TempDir()
+	tS := t.String()
+	if t.Arch == "" && t.OS == "" {
+		tS = ""
+	}
+	return filepath.Join(tmpDir, "lbt", timestamp, tS)
 }
 
 func ParseTarget(s string) (Target, error) {
@@ -110,3 +125,5 @@ func ParseTarget(s string) (Target, error) {
 
 	return Target{OS: os, Arch: arch}, nil
 }
+
+var NoTarget = Target{}

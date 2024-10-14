@@ -67,7 +67,7 @@ func (o *OutputModule) RunModule(modLogger *log.Logger, target types.Target) boo
 		}
 	}
 
-	objDir := filepath.Join(target.TempDir(o.bc.Cwd), o.config.Module)
+	objDir := filepath.Join(target.TempDir(), o.config.Module)
 
 	dE, err := os.ReadDir(objDir)
 	if err != nil {

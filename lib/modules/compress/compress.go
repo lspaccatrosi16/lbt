@@ -72,13 +72,13 @@ func (s *CompressModule) Configure(config *types.BuildConfig) error {
 func (s *CompressModule) RunModule(modLogger *log.Logger, target types.Target) bool {
 	ml := modLogger.ChildLogger("compress")
 
-	objDir := filepath.Join(target.TempDir(s.bc.Cwd), s.config.Module)
+	objDir := filepath.Join(target.TempDir(), s.config.Module)
 	dE, err := os.ReadDir(objDir)
 	if err != nil {
 		log.Logln(log.Error, err.Error())
 		return false
 	}
-	oDir := filepath.Join(target.TempDir(s.bc.Cwd), "compress")
+	oDir := filepath.Join(target.TempDir(), "compress")
 	err = os.MkdirAll(oDir, 0755)
 	if err != nil {
 		log.Logln(log.Error, err.Error())

@@ -2,7 +2,6 @@ package setup
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
@@ -21,9 +20,9 @@ func (i *SetupModule) Configure(config *types.BuildConfig) error {
 	return nil
 }
 
-func (i *SetupModule) RunModule(modLogger *log.Logger, _ types.Target) bool{
-	ml  := modLogger.ChildLogger("setup")
-	err := os.Mkdir(filepath.Join(i.bc.Cwd, "tmp"), 0755) 
+func (i *SetupModule) RunModule(modLogger *log.Logger, _ types.Target) bool {
+	ml := modLogger.ChildLogger("setup")
+	err := os.Mkdir(types.NoTarget.TempDir(), 0755)
 	if err != nil {
 		ml.Logln(log.Error, err.Error())
 		return false
@@ -44,5 +43,5 @@ func (i *SetupModule) TargetAgnostic() bool {
 }
 
 func (*SetupModule) RunOnCached() bool {
-	return true 
+	return true
 }

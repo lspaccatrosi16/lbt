@@ -11,7 +11,7 @@ import (
 	"github.com/lspaccatrosi16/lbt/lib/types"
 )
 
-type BuildModule struct {
+type GobuildModule struct {
 	bc     *types.BuildConfig
 	config *ModConfig
 }
@@ -28,7 +28,7 @@ type ModConfig struct {
 	Root       string    `yaml:"root"`
 }
 
-func (b *BuildModule) Configure(config *types.BuildConfig) error {
+func (b *GobuildModule) Configure(config *types.BuildConfig) error {
 	b.bc = config
 	cfg, err := types.GetModConfig[ModConfig](config, "gobuild")
 	if err != nil {
@@ -38,7 +38,7 @@ func (b *BuildModule) Configure(config *types.BuildConfig) error {
 	return nil
 }
 
-func (b *BuildModule) RunModule(modLogger *log.Logger, target types.Target) bool {
+func (b *GobuildModule) RunModule(modLogger *log.Logger, target types.Target) bool {
 	ml := modLogger.ChildLogger("gobuild")
 
 	if len(b.config.Commands) == 0 {
@@ -58,14 +58,14 @@ func (b *BuildModule) RunModule(modLogger *log.Logger, target types.Target) bool
 	return true
 }
 
-func (b *BuildModule) buildCommandTarget(ml *log.Logger, cmd Command, target types.Target, cmdPath string) error {
+func (b *GobuildModule) buildCommandTarget(ml *log.Logger, cmd Command, target types.Target, cmdPath string) error {
 	ml.Logf(log.Info, "Building %s", target.ExeName(cmd.Name, true))
 	err := target.Validate()
 	if err != nil {
 		return err
 	}
 
-	outPath := filepath.Join(target.TempDir(b.bc.Cwd), "gobuild", target.ExeName(cmd.Name, true))
+	outPath := filepath.Join(target.TempDir(), "gobuild", target.ExeName(cmd.Name, true))
 	args := []string{"build", "-o", outPath}
 	if b.config.Ldflags != "" {
 		args = append(args, "-ldflags", b.config.Ldflags)
@@ -104,22 +104,22 @@ func (b *BuildModule) buildCommandTarget(ml *log.Logger, cmd Command, target typ
 	return nil
 }
 
-func (b *BuildModule) Requires() []string {
+func (b *GobuildModule) Requires() []string {
 	return nil
 }
 
-func (b *BuildModule) Name() string {
+func (b *GobuildModule) Name() string {
 	return "gobuild"
 }
 
-func (b *BuildModule) OnFail() error {
+func (b *GobuildModule) OnFail() error {
 	return nil
 }
 
-func (b *BuildModule) TargetAgnostic() bool {
+func (b *GobuildModule) TargetAgnostic() bool {
 	return false
 }
 
-func (*BuildModule) RunOnCached() bool {
+func (*GobuildModule) RunOnCached() bool {
 	return false
 }

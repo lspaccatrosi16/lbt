@@ -27,7 +27,7 @@ func (g *GetCachedModule) Configure(config *types.BuildConfig) error {
 func (g *GetCachedModule) RunModule(modLogger *log.Logger, target types.Target) bool {
 	ml := modLogger.ChildLogger("getCached")
 	ml.Logln(log.Info, "Source files unchanged, using cached build artifact")
-	based := filepath.Join(target.TempDir(g.bc.Cwd), "getCached")
+	based := filepath.Join(target.TempDir(), "getCached")
 	err := os.MkdirAll(based, 0755)
 	if err != nil {
 		ml.Logln(log.Error, err.Error())

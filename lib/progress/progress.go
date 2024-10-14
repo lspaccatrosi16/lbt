@@ -180,7 +180,9 @@ func (p *Progress) Render(name string, ml *log.Logger) bool {
 	}
 	p.wg.Wait()
 
-	p.genFrame(name, os.Stdout)
+	if !res {
+		p.genFrame(name, os.Stdout)
+	}
 
 	return res
 }

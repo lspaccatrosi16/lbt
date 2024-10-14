@@ -60,9 +60,18 @@ func RunModules(config *types.BuildConfig, mainMods map[string]types.Module, cac
 	}
 
 	cleanupJob := progress.NewJob("post-build")
+	nc, err := args.GetFlagValue[bool]("nc")
+	if err != nil {
+		return err
+	}
+
+	if nc {
+		fmt.Println(types.NoTarget.TempDir())
+	}
+
 	for _, modName := range modules.PostOrder {
 		mod := modules.Post[modName]
-		if !cached || mod.RunOnCached() {
+		if (!cached || mod.RunOnCached()) && !nc {
 			cleanupJob.NewChild(mod.Name()).WithFunc(mod.RunModule).WithConfigure(WrapConfig(mod.Configure, config))
 		}
 	}

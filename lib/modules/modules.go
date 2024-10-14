@@ -1,9 +1,10 @@
 package modules
 
 import (
-	"github.com/lspaccatrosi16/lbt/lib/modules/gobuild"
 	"github.com/lspaccatrosi16/lbt/lib/modules/cleanup"
 	"github.com/lspaccatrosi16/lbt/lib/modules/compress"
+	"github.com/lspaccatrosi16/lbt/lib/modules/gobuild"
+	"github.com/lspaccatrosi16/lbt/lib/modules/javabuild"
 	"github.com/lspaccatrosi16/lbt/lib/modules/output"
 	"github.com/lspaccatrosi16/lbt/lib/modules/setup"
 	"github.com/lspaccatrosi16/lbt/lib/modules/static"
@@ -22,10 +23,11 @@ var PreOrder = []string{
 }
 
 var Main = map[string]types.Module{
-	"gobuild":    &gobuild.BuildModule{},
-	"output":   &output.OutputModule{},
-	"static":   &static.StaticModule{},
-	"compress": &compress.CompressModule{},
+	"gobuild":   &gobuild.GobuildModule{},
+	"javabuild": &javabuild.JavabuildModule{},
+	"output":    &output.OutputModule{},
+	"static":    &static.StaticModule{},
+	"compress":  &compress.CompressModule{},
 }
 
 var Post = map[string]types.Module{
