@@ -22,7 +22,7 @@ func (i *SetupModule) Configure(config *types.BuildConfig) error {
 
 func (i *SetupModule) RunModule(modLogger *log.Logger, _ types.Target) bool {
 	ml := modLogger.ChildLogger("setup")
-	err := os.Mkdir(types.NoTarget.TempDir(), 0755)
+	err := os.MkdirAll(types.NoTarget.TempDir(), 0755)
 	if err != nil {
 		ml.Logln(log.Error, err.Error())
 		return false
