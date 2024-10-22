@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -105,6 +106,14 @@ func (t Target) TempDir() string {
 		tS = ""
 	}
 	return filepath.Join(tmpDir, "lbt", timestamp, tS)
+}
+
+func (t Target) CmpRuntimeOS() bool {
+	return string(t.OS) == runtime.GOOS
+}
+
+func (t Target) CmpRuntimeArch() bool {
+	return string(t.Arch) == runtime.GOARCH
 }
 
 func ParseTarget(s string) (Target, error) {

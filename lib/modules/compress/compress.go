@@ -78,15 +78,15 @@ func (s *CompressModule) RunModule(modLogger *log.Logger, target types.Target) b
 		log.Logln(log.Error, err.Error())
 		return false
 	}
-	oDir := filepath.Join(target.TempDir(), "compress")
-	err = os.MkdirAll(oDir, 0755)
+	outDir := filepath.Join(target.TempDir(), "compress")
+	err = os.MkdirAll(outDir, 0755)
 	if err != nil {
 		log.Logln(log.Error, err.Error())
 		return false
 	}
 
 	for _, entry := range dE {
-		err = s.compressTarget(ml, entry, objDir, oDir)
+		err = s.compressTarget(ml, entry, objDir, outDir)
 		if err != nil {
 			log.Logln(log.Error, err.Error())
 			return false

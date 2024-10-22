@@ -74,7 +74,7 @@ func (s *StaticModule) RunModule(modLogger *log.Logger, target types.Target) boo
 	}
 
 	for _, str := range s.config.Structures {
-		iPath := filepath.Join(s.bc.Cwd, str.Path)
+		iPath := s.bc.RelCfgPath(str.Path)
 		err = s.genStatic(ml, str, target, iPath, oPath, exeDir)
 		if err != nil {
 			ml.Logln(log.Error, err.Error())

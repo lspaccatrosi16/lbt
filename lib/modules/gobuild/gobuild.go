@@ -47,7 +47,7 @@ func (b *GobuildModule) RunModule(modLogger *log.Logger, target types.Target) bo
 	}
 
 	for _, cmd := range b.config.Commands {
-		cmdPath := filepath.Join(b.bc.Cwd, cmd.Path)
+		cmdPath := b.bc.RelCfgPath(cmd.Path)
 		err := b.buildCommandTarget(ml, cmd, target, cmdPath)
 		if err != nil {
 			ml.Logln(log.Error, err.Error())
@@ -98,7 +98,7 @@ func (b *GobuildModule) buildCommandTarget(ml *log.Logger, cmd Command, target t
 		return err
 	}
 	f.Chmod(0777)
-	defer f.Close()
+	f.Close()
 
 	ml.Logf(log.Info, "Built %s", target.ExeName(cmd.Name, true))
 	return nil

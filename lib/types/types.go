@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"gopkg.in/yaml.v3"
@@ -17,14 +18,22 @@ type VerConfig struct {
 	VtS  string `yaml:"type"`
 }
 
+func NewBuildConfig(loc string) *BuildConfig {
+	return &BuildConfig{loc: loc}
+}
+
 type BuildConfig struct {
-	Name        string   `yaml:"name"`
-	Targets     []Target `yaml:"targets"`
-	Cwd         string
+	Name        string         `yaml:"name"`
+	Targets     []Target       `yaml:"targets"`
 	Modules     []ModuleConfig `yaml:"modules"`
 	IncludeDirs []string       `yaml:"includeDirs"`
 	Version     VerConfig      `yaml:"version"`
 	Produced    []string
+	loc         string
+}
+
+func (b *BuildConfig) RelCfgPath(paths ...string) string {
+	return filepath.Join(append([]string{b.loc}, paths...)...)
 }
 
 func GetModConfig[T any](b *BuildConfig, name string) (*T, error) {

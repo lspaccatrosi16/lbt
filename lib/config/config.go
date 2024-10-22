@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/lspaccatrosi16/go-cli-tools/args"
@@ -22,17 +23,16 @@ func ParseConfig() (*types.BuildConfig, error) {
 	}
 	defer f.Close()
 
-	var config types.BuildConfig
-	err = yaml.NewDecoder(f).Decode(&config)
+	cfgAPath, err := filepath.Abs(cf)
 	if err != nil {
 		return nil, err
 	}
 
-	wd, err := os.Getwd()
+	config := types.NewBuildConfig(filepath.Dir(cfgAPath))
+	err = yaml.NewDecoder(f).Decode(config)
 	if err != nil {
 		return nil, err
 	}
-	config.Cwd = wd
 
 	if config.Name == "" {
 		return nil, fmt.Errorf("config file requires name field")
@@ -40,6 +40,15 @@ func ParseConfig() (*types.BuildConfig, error) {
 		return nil, fmt.Errorf("name field cannot contain '.'")
 	}
 
-	os.Chdir(config.Cwd)
-	return &config, nil
+	if len(config.Targets) == 0 {
+		return nil, fmt.Errorf("no targets provided")
+	}
+
+	for _, t := range config.Targets {
+		if err := t.Validate(); err != nil {
+			return nil, err
+		}
+	}
+
+	return config, nil
 }

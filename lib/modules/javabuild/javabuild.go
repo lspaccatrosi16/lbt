@@ -2,14 +2,13 @@ package javabuild
 
 import (
 	"bytes"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/lspaccatrosi16/lbt/lib/log"
 	"github.com/lspaccatrosi16/lbt/lib/types"
+	"github.com/lspaccatrosi16/lbt/lib/util"
 )
 
 type JavabuildModule struct {
@@ -41,7 +40,7 @@ func (b *JavabuildModule) RunModule(modLogger *log.Logger, target types.Target) 
 
 	ml.Logln(log.Info, "Building Java Classes")
 
-	files, err := scanDir(b.bc.Cwd, ".java")
+	files, err := util.ScanDir(b.bc.RelCfgPath(), ".java")
 
 	if err != nil {
 		ml.Logln(log.Error, err.Error())
@@ -63,7 +62,7 @@ func (b *JavabuildModule) RunModule(modLogger *log.Logger, target types.Target) 
 
 	var stdout, stderr bytes.Buffer
 
-	if res := runCmd(exec.Command("javac", args...), stdout, stderr, ml, b.bc.Cwd); !res {
+	if res := util.RunCmd(exec.Command("javac", args...), stdout, stderr, ml, b.bc.RelCfgPath()); !res {
 		return false
 	}
 
@@ -90,12 +89,12 @@ func (b *JavabuildModule) RunModule(modLogger *log.Logger, target types.Target) 
 	ml.Logln(log.Info, "Resolving Dependencies")
 
 	for _, dep := range b.config.Dependencies {
-		if res := runCmd(exec.Command("jar", "xf", filepath.Join(b.bc.Cwd, dep)), stdout, stderr, ml, odt); !res {
+		if res := util.RunCmd(exec.Command("jar", "xf", filepath.Join(b.bc.RelCfgPath(), dep)), stdout, stderr, ml, odt); !res {
 			return false
 		}
 	}
 
-	runCmd(exec.Command("rm", "-rf", "META-INF"), stdout, stderr, ml, odt)
+	util.RunCmd(exec.Command("rm", "-rf", "META-INF"), stdout, stderr, ml, odt)
 
 	ml.Logln(log.Info, "Bundling Jar")
 	args = []string{"--create"}
@@ -106,22 +105,22 @@ func (b *JavabuildModule) RunModule(modLogger *log.Logger, target types.Target) 
 		name = b.bc.Name
 	}
 
-	classes, err := scanDir(odt, "")
+	classes, err := util.ScanDir(odt, "")
 	if err != nil {
 		ml.Logln(log.Error, err.Error())
 		return false
 	}
 
-	args = append(args, "-f", filepath.Join("..", target.ExeName(name, false)+".jar"), "-m", mPath)
+	outPath := filepath.Join("..", target.ExeName(name, false)+".jar")
+
+	args = append(args, "-f", outPath, "-m", mPath)
 	args = append(args, classes...)
 
-	ml.Logln(log.Info, args)
-
-	if res := runCmd(exec.Command("jar", args...), stdout, stderr, ml, odt); !res {
+	if res := util.RunCmd(exec.Command("jar", args...), stdout, stderr, ml, odt); !res {
 		return false
 	}
 
-	if res := runCmd(exec.Command("rm", "-r", odt), stdout, stderr, ml, od); !res {
+	if res := util.RunCmd(exec.Command("rm", "-r", odt), stdout, stderr, ml, od); !res {
 		return false
 	}
 
@@ -146,47 +145,4 @@ func (b *JavabuildModule) TargetAgnostic() bool {
 
 func (*JavabuildModule) RunOnCached() bool {
 	return false
-}
-
-func runCmd(eCmd *exec.Cmd, stdout, stderr bytes.Buffer, ml *log.Logger, dir string) bool {
-	eCmd.Dir = dir
-	eCmd.Stdout = &stdout
-	eCmd.Stderr = &stderr
-
-	err := eCmd.Run()
-	if err != nil {
-		ml.Logln(log.Error, err.Error())
-		ml.Logln(log.Error, stdout.String())
-		ml.Logln(log.Error, stderr.String())
-		return false
-	}
-
-	stdout.Reset()
-	stderr.Reset()
-
-	return true
-}
-
-func scanDir(startDir, suffix string) ([]string, error) {
-	files := []string{}
-	err := filepath.WalkDir(startDir, func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() {
-			return nil
-		}
-
-		if strings.HasSuffix(d.Name(), suffix) {
-			rp, err := filepath.Rel(startDir, path)
-			if err != nil {
-				return err
-			}
-			files = append(files, rp)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	return files, nil
 }

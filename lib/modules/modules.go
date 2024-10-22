@@ -1,6 +1,7 @@
 package modules
 
 import (
+	"github.com/lspaccatrosi16/lbt/lib/modules/cbuild"
 	"github.com/lspaccatrosi16/lbt/lib/modules/cleanup"
 	"github.com/lspaccatrosi16/lbt/lib/modules/compress"
 	"github.com/lspaccatrosi16/lbt/lib/modules/gobuild"
@@ -25,6 +26,7 @@ var PreOrder = []string{
 var Main = map[string]types.Module{
 	"gobuild":   &gobuild.GobuildModule{},
 	"javabuild": &javabuild.JavabuildModule{},
+	"cbuild":    &cbuild.CbuildModule{},
 	"output":    &output.OutputModule{},
 	"static":    &static.StaticModule{},
 	"compress":  &compress.CompressModule{},

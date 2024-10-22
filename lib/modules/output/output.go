@@ -46,7 +46,7 @@ func (o *OutputModule) Configure(config *types.BuildConfig) error {
 func (o *OutputModule) RunModule(modLogger *log.Logger, target types.Target) bool {
 	ml := modLogger.ChildLogger("output")
 
-	oPath := filepath.Join(o.bc.Cwd, o.config.OutDir)
+	oPath := o.bc.RelCfgPath(o.config.OutDir)
 
 	s, err := os.Stat(oPath)
 	if err != nil {

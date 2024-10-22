@@ -6,7 +6,6 @@ import (
 	"io"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -71,13 +70,13 @@ func (v *VersionModule) Configure(config *types.BuildConfig) error {
 
 func (v *VersionModule) RunModule(modLogger *log.Logger, _ types.Target) bool {
 	if v.config == nil {
-		return true 
+		return true
 	}
 
 	ml := modLogger.ChildLogger("version")
 	var newVersion string
 
-	f, err := os.Open(filepath.Join(v.bc.Cwd, v.bc.Version.Path))
+	f, err := os.Create(v.bc.RelCfgPath(v.bc.Version.Path))
 	if err == nil {
 		by, err := io.ReadAll(f)
 		if err != nil {
@@ -124,7 +123,7 @@ func (v *VersionModule) RunModule(modLogger *log.Logger, _ types.Target) bool {
 
 	ml.Logf(log.Info, "new version: %s", newVersion)
 
-	f, err = os.Create(filepath.Join(v.bc.Cwd, v.bc.Version.Path))
+	f, err = os.Create(v.bc.RelCfgPath(v.bc.Version.Path))
 	if err != nil {
 		ml.Logln(log.Error, err.Error())
 		return false
@@ -144,7 +143,7 @@ func (v *VersionModule) Requires() []string {
 
 func (v *VersionModule) OnFail() error {
 	if v.prev != "" {
-		f, err := os.Create(filepath.Join(v.bc.Cwd, v.bc.Version.Path))
+		f, err := os.Create(v.bc.RelCfgPath(v.bc.Version.Path))
 		if err != nil {
 			return err
 		}

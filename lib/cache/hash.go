@@ -15,13 +15,13 @@ func HashDirectories(bc *types.BuildConfig, dirs []string) (string, error) {
 
 	var vfile string
 	if bc.Version.Path != "" {
-		vfile = filepath.Join(bc.Cwd, bc.Version.Path)
+		vfile = bc.RelCfgPath(bc.Version.Path)
 	}
 
 	for _, dir := range dirs {
 		dHash := ""
-		err := filepath.WalkDir(filepath.Join(bc.Cwd, dir), func(path string, d fs.DirEntry, err error) error {
-			if !d.IsDir() && (vfile == "" || vfile != path){
+		err := filepath.WalkDir(bc.RelCfgPath(dir), func(path string, d fs.DirEntry, err error) error {
+			if !d.IsDir() && (vfile == "" || vfile != path) {
 				pHash := hash([]byte(path))
 				di, err := d.Info()
 				if err != nil {
