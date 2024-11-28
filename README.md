@@ -1,5 +1,5 @@
 # LBT
-> A powerful build tool for golang projects
+> A powerful build tool for projects written in golang, java, and c.
 
 ---
 
@@ -35,16 +35,46 @@ A `lbt.yaml` defines the build process.
 
 ### GoBuild
 
-The core build module of `lbt`. Configure commands (e.g. each main.go that you want to be produced into a binary).
+The build module of `lbt` for golang. Configure commands (e.g. each main.go that you want to be produced into a binary).
 
-#### Build Module Config
+#### GoBuild Module Config
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `commands` | {`name`: string, `path`: string} | A list of commands, which are objects that contain a `name` and a `path`, which points to the `main.go` file. |
+| `commands` | []{`name`: string, `path`: string} | A list of commands, which are objects that contain a `name` and a `path`, which points to the `main.go` file. |
 | `ldflags` | string | Any flags that should be passed to the `go build` command in the `-ldflags` argument. |
 | `cgOff` | boolean | Disables CGO for the build (useful if you want to make sure your program is statically linked). |
 | `root` | string | The root directory that the go build commands will be run from. |
+
+### JavaBuild
+
+The build module of `lbt` for java.
+
+#### JavaBuild Module Config
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `main` | string | The name of the main class. |
+| `dependencies` | []string | A list of paths to dependencies. Can be directories or jar files. |
+
+### CBuild
+
+The build module of `lbt` for C.
+
+#### CBuild Module Config
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `name` | string | The name of the executable. |
+| `source` | string | The path to the `src` directory, which is the main code directory of the project. |
+| `include` | []string | A list of paths to the `include` directory for header files. |
+| `compiler` | string | The name of the compiler to run e.g. `gcc` or `clang`, |
+| `flags` | []string | A list of extra flags to pass the compiler. |
+| `main` | string | The path to the `main.c` file. |
+| `librarymode` | `shared` \| `static` | The type of library to build. |
+| `cc` | boolean | Generate a `compile_commands.json` file (useful for clangd lsp). |
+| `libs` | []string | List of libraries to include and compile against. |
+| `libdirs` | []string | List of directories to search for 3rd party libraries. |
 
 ### Output
 Writes built objects to a given output directory.
