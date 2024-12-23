@@ -10,6 +10,7 @@ import (
 	"github.com/lspaccatrosi16/lbt/lib/modules/output"
 	"github.com/lspaccatrosi16/lbt/lib/modules/setup"
 	"github.com/lspaccatrosi16/lbt/lib/modules/static"
+	"github.com/lspaccatrosi16/lbt/lib/modules/vbuild"
 	"github.com/lspaccatrosi16/lbt/lib/modules/version"
 	"github.com/lspaccatrosi16/lbt/lib/types"
 )
@@ -29,6 +30,7 @@ var Main = map[string]types.Module{
 	"javabuild": &javabuild.JavabuildModule{},
 	"cbuild":    &cbuild.CbuildModule{},
 	"odinbuild": &odinbuild.OdinbuildModule{},
+	"vbuild":    &vbuild.VbuildModule{},
 	"output":    &output.OutputModule{},
 	"static":    &static.StaticModule{},
 	"compress":  &compress.CompressModule{},

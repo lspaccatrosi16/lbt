@@ -18,8 +18,10 @@ type OdinbuildModule struct {
 }
 
 type ModConfig struct {
-	Src string `yaml:"src"`
-	Optimise string `yaml:"optimise"`
+	Src      string   `yaml:"src"`
+	Optimise string   `yaml:"optimise"`
+	Debug    bool     `yaml:"debug"`
+	Flags    []string `yaml:"flags"`
 }
 
 func (b *OdinbuildModule) Configure(config *types.BuildConfig) error {
@@ -62,6 +64,11 @@ func (b *OdinbuildModule) RunModule(modLogger *log.Logger, target types.Target) 
 	args = append(args, fmt.Sprintf("-out:%s", outPath))
 	args = append(args, fmt.Sprintf("-o:%s", b.config.Optimise))
 	args = append(args, fmt.Sprintf("-target:%s", target.String()))
+	args = append(args, b.config.Flags...)
+
+	if b.config.Debug {
+		args = append(args, "-debug")
+	}
 
 	cmd = exec.Command("odin", args...)
 	ml.Logf(log.Info, "command: odin %s\n", strings.Join(args, " "))

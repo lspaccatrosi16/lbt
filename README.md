@@ -84,9 +84,24 @@ The build module of `lbt` for odin.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `src` | string | The path to the project's src folder |
-| `optimise` | string | The optimisation preset to use odin compilation |
+| `src` | string | The path to the project's src folder. |
+| `optimise` | string | The optimisation preset to use in odin compilation. |
+| `debug` | boolean | Enables debug compilation. |
+| `flags` | []string | Additional flags to be passed to the compiler. |
 
+
+### VBuild
+
+The build module of `lbt` for v.
+
+#### OdinBuild Module Comfig
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `src` | string | The path to the project's src folder. |
+| `backend` | string | The backend  to use in v compilation. |
+| `debug` | boolean | Enables debug compilation. |
+| `flags` | []string | Additional flags to be passed to the compiler. |
 ### Output
 Writes built objects to a given output directory.
 
