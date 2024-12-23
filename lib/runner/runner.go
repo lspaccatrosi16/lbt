@@ -14,17 +14,17 @@ import (
 )
 
 func RunModules(config *types.BuildConfig, mainMods map[string]types.Module, cached bool) error {
-	buf := bytes.NewBuffer(nil)
-	ml := log.Default.ChildLogger("build").OverrideWriter(buf)
+	ml := log.Default.ChildLogger("build")
 
 	job := progress.NewJob("lbt")
 	preHooksJob := job.NewChild("pre-build")
 	for _, modName := range modules.PreOrder {
 		mod := modules.Pre[modName]
 		if !cached || mod.RunOnCached() {
-			preHooksJob.NewChild(mod.Name()).WithFunc(mod.RunModule).WithConfigure(WrapConfig(mod.Configure, config))
+			preHooksJob.NewChild(mod.Name()).WithFunc(mod.RunModule).WithConfigure(WrapConfig(mod.Configure, config)).WithLog(ml)
 		}
 	}
+	tls := map[types.Target]*bytes.Buffer{}
 
 	if len(config.Modules) > 0 {
 		targFilter, err := args.GetFlagValue[string]("targFilter")
@@ -48,11 +48,14 @@ func RunModules(config *types.BuildConfig, mainMods map[string]types.Module, cac
 
 		for _, targ := range config.Targets {
 			if targFilter == "" || slices.Contains(filters, targ.String()) {
-				tg := mainJob.NewChild(targ.String())
+				buf := bytes.NewBuffer(nil)
+				tl := ml.ChildLogger(targ.String()).OverrideWriter(buf)
+				tls[targ] = buf
+				tg := mainJob.NewChild(targ.String()).WithLog(tl)
 				for _, modName := range order {
 					mod := mainMods[modName]
 					if !cached || mod.RunOnCached() {
-						tg.NewChild(modName).WithFunc(mod.RunModule).WithTarget(targ)
+						tg.NewChild(modName).WithFunc(mod.RunModule).WithTarget(targ).WithLog(tl)
 					}
 				}
 			}
@@ -72,16 +75,23 @@ func RunModules(config *types.BuildConfig, mainMods map[string]types.Module, cac
 	for _, modName := range modules.PostOrder {
 		mod := modules.Post[modName]
 		if (!cached || mod.RunOnCached()) && !nc {
-			cleanupJob.NewChild(mod.Name()).WithFunc(mod.RunModule).WithConfigure(WrapConfig(mod.Configure, config))
+			cleanupJob.NewChild(mod.Name()).WithFunc(mod.RunModule).WithConfigure(WrapConfig(mod.Configure, config)).WithLog(ml)
 		}
 	}
 
 	progress := progress.
 		NewProgress(job, cleanupJob)
-	res := progress.Render(fmt.Sprintf("build %s", config.Name), ml)
+	res := progress.Render(fmt.Sprintf("build %s", config.Name))
+
+	for t, b := range tls {
+		if b.String() == "" {
+			continue
+		}
+		fmt.Printf("[%s]\n", t.String())
+		fmt.Println(b.String())
+	}
 
 	if !res {
-		fmt.Println(buf.String())
 		return fmt.Errorf("tasks encountered errors")
 	}
 

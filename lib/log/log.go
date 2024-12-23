@@ -49,7 +49,7 @@ func SetLogLevel(l LogLevel) {
 	SelLogLevel = l
 }
 
-var SelLogLevel = Info
+var SelLogLevel = Warning
 
 type Logger struct {
 	Parent *Logger

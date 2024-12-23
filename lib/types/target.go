@@ -26,7 +26,7 @@ const (
 	AMD64 Arch = "amd64"
 	ARM64 Arch = "arm64"
 	ARM   Arch = "arm"
-	i386  Arch = "386"
+	i386  Arch = "i386"
 )
 
 func ParseOS(s string) (OS, error) {
@@ -54,7 +54,7 @@ func ParseArch(s string) (Arch, error) {
 		return ARM64, nil
 	case "arm":
 		return ARM, nil
-	case "386":
+	case "i386":
 		return i386, nil
 	default:
 		return "", fmt.Errorf("unknown arch: %s", s)

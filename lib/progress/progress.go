@@ -15,7 +15,7 @@ import (
 )
 
 const spinnerLen = 12
-const cyclesPerSec = 0.5 
+const cyclesPerSec = 0.5
 
 var spinnerChars = [spinnerLen]rune{'\u2581', '\u2583', '\u2584', '\u2585', '\u2586', '\u2587', '\u2588', '\u2587', '\u2586', '\u2585', '\u2584', '\u2583'}
 
@@ -50,6 +50,7 @@ type Job struct {
 	configure   func() error
 	target      types.Target
 	canParallel bool
+	ml          *log.Logger
 }
 
 func (j *Job) NewChild(name string) *Job {
@@ -59,7 +60,7 @@ func (j *Job) NewChild(name string) *Job {
 	return nj
 }
 
-func (j *Job) Run(ml *log.Logger) bool {
+func (j *Job) Run() bool {
 	var res bool
 	if len(j.jobs) > 0 || j.runner == nil {
 		res = true
@@ -68,7 +69,7 @@ func (j *Job) Run(ml *log.Logger) bool {
 			for _, cj := range j.jobs {
 				wg.Add(1)
 				go func() {
-					cj.Run(ml)
+					cj.Run()
 					wg.Done()
 				}()
 			}
@@ -80,7 +81,7 @@ func (j *Job) Run(ml *log.Logger) bool {
 			}
 		} else {
 			for _, cj := range j.jobs {
-				cres := cj.Run(ml)
+				cres := cj.Run()
 				if !cres {
 					res = false
 					break
@@ -95,7 +96,7 @@ func (j *Job) Run(ml *log.Logger) bool {
 				goto end
 			}
 		}
-		res = j.runner(ml, j.target)
+		res = j.runner(j.ml, j.target)
 	}
 
 end:
@@ -155,6 +156,11 @@ func (j *Job) WithParallel() *Job {
 	return j
 }
 
+func (j *Job) WithLog(ml *log.Logger) *Job {
+	j.ml = ml
+	return j
+}
+
 func NewJob(name string) *Job {
 	return &Job{
 		name: name,
@@ -163,17 +169,16 @@ func NewJob(name string) *Job {
 
 type Progress struct {
 	jobs     []*Job
-	stop     bool
 	wg       sync.WaitGroup
 	spinProg int
 }
 
-func (p *Progress) Render(name string, ml *log.Logger) bool {
+func (p *Progress) Render(name string) bool {
 	p.wg.Add(1)
 	go p.render(name)
 	res := true
 	for _, jg := range p.jobs {
-		r := jg.Run(ml)
+		r := jg.Run()
 		if !r {
 			res = false
 		}
@@ -240,7 +245,7 @@ func (p *Progress) genFrame(top string, w io.Writer) bool {
 		fmt.Fprintln(w, " ")
 	}
 
-	if comp || p.stop {
+	if comp {
 		return true
 	}
 
