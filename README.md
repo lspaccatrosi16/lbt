@@ -76,6 +76,17 @@ The build module of `lbt` for C.
 | `libs` | []string | List of libraries to include and compile against. |
 | `libdirs` | []string | List of directories to search for 3rd party libraries. |
 
+### OdinBuild
+
+The build module of `lbt` for odin.
+
+#### OdinBuild Module Comfig
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `src` | string | The path to the project's src folder |
+| `optimise` | string | The optimisation preset to use odin compilation |
+
 ### Output
 Writes built objects to a given output directory.
 
