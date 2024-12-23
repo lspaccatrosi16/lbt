@@ -18,8 +18,8 @@ type OdinbuildModule struct {
 }
 
 type ModConfig struct {
-	Src string `json:"src"`
-	Opt string `json:"optimise"`
+	Src string `yaml:"src"`
+	Optimise string `yaml:"optimise"`
 }
 
 func (b *OdinbuildModule) Configure(config *types.BuildConfig) error {
@@ -29,8 +29,8 @@ func (b *OdinbuildModule) Configure(config *types.BuildConfig) error {
 		return err
 	}
 
-	if cfg.Opt == "" {
-		cfg.Opt = "minimal"
+	if cfg.Optimise == "" {
+		cfg.Optimise = "minimal"
 	}
 
 	b.config = cfg
@@ -60,7 +60,7 @@ func (b *OdinbuildModule) RunModule(modLogger *log.Logger, target types.Target) 
 
 	args := []string{"build", b.bc.RelCfgPath(b.config.Src)}
 	args = append(args, fmt.Sprintf("-out:%s", outPath))
-	args = append(args, fmt.Sprintf("-o:%s", b.config.Opt))
+	args = append(args, fmt.Sprintf("-o:%s", b.config.Optimise))
 	args = append(args, fmt.Sprintf("-target:%s", target.String()))
 
 	cmd = exec.Command("odin", args...)
