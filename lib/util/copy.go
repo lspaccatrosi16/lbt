@@ -33,9 +33,9 @@ func cpy_dir(dst, src string) error {
 			if err != nil {
 				return err
 			}
-			return cpy_dir(dstPath, srcPath)
+			cpy_dir(dstPath, srcPath)
 		} else {
-			return cpy_file(dstPath, srcPath)
+			cpy_file(dstPath, srcPath)
 		}
 	}
 	return nil
